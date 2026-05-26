@@ -13,13 +13,14 @@ A private family web app for managing both screen-time-style points and allowanc
 
 ## Current Prototype
 
-- Role switcher for admin, parent, and kid views.
+- Supabase-backed Google login and house setup.
 - Kids see only their own summaries and assigned activities.
 - Kids can mark only their own assigned activity as done.
 - Approval-required activities move to `submitted`.
 - Parents/admins can approve or reject submitted work.
 - Approval creates a points or money ledger entry.
 - Points and allowance balances are summarized separately.
+- Activities, completions, and balance adjustments write to Supabase.
 
 ## Getting Started
 
@@ -43,6 +44,10 @@ SUPABASE_SERVICE_ROLE_KEY=
 
 See [docs/architecture.md](docs/architecture.md) for the permission model and database shape.
 See [docs/supabase-setup.md](docs/supabase-setup.md) for the Supabase dashboard setup steps.
+
+The app currently creates the first house/admin after login. Adding kid/parent
+members through the UI is the next backend feature; until then, additional
+members can be inserted in Supabase.
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 

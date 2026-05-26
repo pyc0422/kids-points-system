@@ -35,6 +35,10 @@ begin
     'bg-sky-500'
   );
 
+  update public.profiles
+  set active_house_id = created_house.id
+  where id = auth.uid();
+
   return created_house;
 end;
 $$;

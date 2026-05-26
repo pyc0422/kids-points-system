@@ -89,7 +89,7 @@ export function ActivitiesTab({
             }
 
             onAddActivity({
-              id: `activity-${globalThis.crypto.randomUUID()}`,
+              id: globalThis.crypto.randomUUID(),
               name: name.trim(),
               description: description.trim() || undefined,
               assigneeIds,

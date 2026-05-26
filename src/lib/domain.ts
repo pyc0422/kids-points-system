@@ -18,6 +18,12 @@ export type HouseMember = {
   avatarColor: string;
 };
 
+export type House = {
+  id: string;
+  name: string;
+  inviteCode: string;
+};
+
 export type Activity = {
   id: string;
   name: string;

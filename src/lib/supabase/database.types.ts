@@ -35,6 +35,7 @@ export type Database = {
           reward_type: Database["public"]["Enums"]["reward_type"];
         };
         Update: Partial<Database["public"]["Tables"]["activities"]["Insert"]>;
+        Relationships: [];
       };
       activity_assignees: {
         Row: {
@@ -46,6 +47,7 @@ export type Database = {
           member_id: string;
         };
         Update: Partial<Database["public"]["Tables"]["activity_assignees"]["Insert"]>;
+        Relationships: [];
       };
       completions: {
         Row: {
@@ -69,6 +71,7 @@ export type Database = {
           submitted_at?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["completions"]["Insert"]>;
+        Relationships: [];
       };
       house_members: {
         Row: {
@@ -90,6 +93,7 @@ export type Database = {
           user_id: string;
         };
         Update: Partial<Database["public"]["Tables"]["house_members"]["Insert"]>;
+        Relationships: [];
       };
       houses: {
         Row: {
@@ -107,6 +111,7 @@ export type Database = {
           name: string;
         };
         Update: Partial<Database["public"]["Tables"]["houses"]["Insert"]>;
+        Relationships: [];
       };
       ledger_entries: {
         Row: {
@@ -132,23 +137,43 @@ export type Database = {
           type: Database["public"]["Enums"]["reward_type"];
         };
         Update: Partial<Database["public"]["Tables"]["ledger_entries"]["Insert"]>;
+        Relationships: [];
       };
       profiles: {
         Row: {
           created_at: string;
           display_name: string | null;
+          active_house_id: string | null;
           id: string;
         };
         Insert: {
           created_at?: string;
           display_name?: string | null;
+          active_house_id?: string | null;
           id: string;
         };
         Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
+        Relationships: [];
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      create_house: {
+        Args: {
+          house_name: string;
+          display_name: string;
+        };
+        Returns: Database["public"]["Tables"]["houses"]["Row"];
+      };
+      join_house: {
+        Args: {
+          house_ref: string;
+          display_name: string;
+          role: Database["public"]["Enums"]["member_role"];
+        };
+        Returns: Database["public"]["Tables"]["houses"]["Row"];
+      };
+    };
     Enums: {
       activity_frequency: "as-needed" | "weekdays" | "daily" | "weekly" | "monthly";
       completion_status: "pending" | "submitted" | "approved" | "rejected";

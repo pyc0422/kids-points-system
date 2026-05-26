@@ -1,21 +1,21 @@
-import { ChevronDown, HomeIcon, UserRoundCheck } from "lucide-react";
+import { ArrowLeftRight, LogOut, HomeIcon } from "lucide-react";
 import type { HouseMember } from "@/lib/domain";
 import type { TabId } from "@/utils/app-types";
 import { roleLabels } from "@/utils/constants";
+import { Avatar } from "./Avatar";
+import Link from "next/link";
 
 export function AppHeader({
-  activeMemberId,
+  activeMember,
   activeTab,
   availableTabs,
-  members,
-  onMemberChange,
+  houseLabel,
   onTabChange,
 }: {
-  activeMemberId: string;
+  activeMember: HouseMember;
   activeTab: TabId;
   availableTabs: Array<{ id: TabId; label: string; icon: React.ReactNode }>;
-  members: HouseMember[];
-  onMemberChange: (memberId: string) => void;
+  houseLabel: string;
   onTabChange: (tabId: TabId) => void;
 }) {
   return (
@@ -27,34 +27,42 @@ export function AppHeader({
               <HomeIcon aria-hidden className="size-5" />
             </div>
             <div>
-              <p className="text-sm font-medium text-zinc-500">House ID KITE-4821</p>
+              <p className="text-sm font-medium text-zinc-500">{houseLabel}</p>
               <h1 className="text-2xl font-semibold tracking-normal">
                 Family Points & Allowance
               </h1>
             </div>
           </div>
 
-          <label className="flex w-fit items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-medium">
-            <UserRoundCheck aria-hidden className="size-4 text-zinc-500" />
-            Viewing as
-            <span className="relative">
-              <select
-                value={activeMemberId}
-                onChange={(event) => onMemberChange(event.target.value)}
-                className="appearance-none rounded-md border border-zinc-300 bg-white py-2 pl-3 pr-8 font-semibold outline-none transition focus:border-zinc-950"
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Link
+              href="/houses/switch"
+              className="inline-flex h-11 items-center gap-2 rounded-md border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+            >
+              <ArrowLeftRight aria-hidden className="size-4" />
+              Switch house
+            </Link>
+
+            <div className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2">
+              <Avatar member={activeMember} compact />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-zinc-950">
+                  {activeMember.name}
+                </p>
+                <p className="text-xs text-zinc-500">{roleLabels[activeMember.role]}</p>
+              </div>
+            </div>
+
+            <form action="/auth/signout" method="post">
+              <button
+                type="submit"
+                className="inline-flex h-11 items-center gap-2 rounded-md border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
               >
-                {members.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.name} ({roleLabels[member.role]})
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                aria-hidden
-                className="pointer-events-none absolute right-2 top-1/2 size-4 -translate-y-1/2 text-zinc-500"
-              />
-            </span>
-          </label>
+                <LogOut aria-hidden className="size-4" />
+                Log out
+              </button>
+            </form>
+          </div>
         </div>
 
         <nav className="flex gap-2 overflow-x-auto">
