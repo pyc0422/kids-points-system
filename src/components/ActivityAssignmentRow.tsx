@@ -38,20 +38,28 @@ export function ActivityAssignmentRow({
   ) => void;
 }) {
   const status = completion?.status ?? "pending";
+  const isRepeatable = activity.frequency === "as-needed";
+  const isCompleted = status === "submitted" || status === "approved";
   const canKidSubmit =
     activeMember?.role === "kid" &&
     activeMember.id === member.id &&
-    status !== "submitted" &&
-    status !== "approved";
-  const canAdultMarkDone =
-    canReview && status !== "submitted" && status !== "approved";
+    (isRepeatable || !isCompleted);
+  const canAdultMarkDone = canReview && (isRepeatable || !isCompleted);
 
   return (
-    <article className="rounded-lg border border-zinc-200 p-3 sm:p-4">
+    <article
+      className={`rounded-lg border p-3 sm:p-4 ${
+        isCompleted && !isRepeatable
+          ? "border-zinc-200 bg-zinc-50/70 opacity-70"
+          : "border-zinc-200"
+      }`}
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-semibold">{activity.name}</h3>
+            <h3 className={`font-semibold ${isCompleted && !isRepeatable ? "line-through" : ""}`}>
+              {activity.name}
+            </h3>
             <Badge>{activity.frequency.replace("-", " ")}</Badge>
             <Badge tone={activity.rewardType === "points" ? "blue" : "green"}>
               {rewardLabel(activity.rewardType, activity.rewardAmount)}
@@ -80,11 +88,17 @@ export function ActivityAssignmentRow({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span
-            className={`rounded-md border px-2 py-1 text-xs font-semibold capitalize ${statusStyles[status]}`}
-          >
-            {status}
-          </span>
+          {isRepeatable ? (
+            <span className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold text-zinc-600">
+              Repeatable
+            </span>
+          ) : (
+            <span
+              className={`rounded-md border px-2 py-1 text-xs font-semibold capitalize ${statusStyles[status]}`}
+            >
+              {status}
+            </span>
+          )}
           {canKidSubmit ? (
             <button
               type="button"

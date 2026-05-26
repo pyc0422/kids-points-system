@@ -27,6 +27,9 @@ In Supabase, open **SQL Editor** and run these files in order:
 
 1. `supabase/migrations/0001_initial_schema.sql`
 2. `supabase/migrations/0002_house_creation_rpc.sql`
+3. `supabase/migrations/0003_join_house_rpc.sql`
+4. `supabase/migrations/0005_active_house_and_multi_membership.sql`
+5. `supabase/migrations/0006_activity_repeat_on.sql`
 
 The migration creates:
 
@@ -37,6 +40,7 @@ The migration creates:
 - role enums
 - Row Level Security policies
 - a `create_house(house_name, display_name)` RPC that creates the first admin member
+- a `join_house(house_ref, display_name, role)` RPC that accepts a house UUID or invite code
 
 ## 4. Enable Google login
 

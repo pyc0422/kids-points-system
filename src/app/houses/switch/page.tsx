@@ -2,7 +2,7 @@ import { AuthScreen } from "@/components/AuthScreen";
 import { HouseSetupScreen } from "@/components/HouseSetupScreen";
 import { HouseSwitcherScreen } from "@/components/HouseSwitcherScreen";
 import { createClient } from "@/lib/supabase/server";
-import { getHouseSwitchData } from "@/lib/supabase/queries";
+import { getHouseSwitchData } from "@/lib/bff/family";
 
 export default async function HouseSwitchPage() {
   const supabase = await createClient();
@@ -24,11 +24,17 @@ export default async function HouseSwitchPage() {
     );
   }
 
+  const currentEntry =
+    switchData.joinedHouses.find((entry) => entry.house.id === switchData.activeHouseId) ??
+    switchData.joinedHouses[0];
+
   return (
     <HouseSwitcherScreen
       defaultDisplayName={user.user_metadata.full_name ?? user.email}
       joinedHouses={switchData.joinedHouses}
       activeHouseId={switchData.activeHouseId}
+      activeHouse={currentEntry?.house ?? null}
+      activeMemberRole={currentEntry?.member.role ?? null}
     />
   );
 }

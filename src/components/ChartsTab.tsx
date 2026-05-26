@@ -1,6 +1,6 @@
 import { Check, ChevronLeft, ChevronRight, Circle, X } from "lucide-react";
 import type { Activity, Completion, HouseMember } from "@/lib/domain";
-import { getCompletion, isActivityDue } from "@/utils/activity";
+import { formatActivitySchedule, getCompletion, isActivityDue } from "@/utils/activity";
 import { dayLabels, demoToday } from "@/utils/constants";
 import { addDays, formatDate, isoDate } from "@/utils/date";
 
@@ -99,7 +99,7 @@ export function ChartsTab({
               <div className="p-3">
                 <p className="font-semibold">{activity.name}</p>
                 <p className="text-xs capitalize text-zinc-500">
-                  {activity.frequency.replace("-", " ")}
+                  {formatActivitySchedule(activity)}
                 </p>
               </div>
               {weekDays.map((date) => (

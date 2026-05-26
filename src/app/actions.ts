@@ -57,6 +57,32 @@ export async function createHouseAction(formData: FormData) {
   redirect("/");
 }
 
+export async function updateHouseAction(formData: FormData) {
+  const houseId = String(formData.get("houseId") ?? "").trim();
+  const houseName = String(formData.get("houseName") ?? "").trim();
+
+  if (!houseId || !houseName) {
+    throw new Error("House ID and house name are required.");
+  }
+
+  const { supabase, member } = await getCurrentMember(houseId);
+  if (member.role !== "admin") {
+    throw new Error("Only admins can edit house settings.");
+  }
+
+  const { error } = await supabase
+    .from("houses")
+    .update({ name: houseName })
+    .eq("id", houseId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/");
+  redirect("/houses/switch");
+}
+
 export async function joinHouseAction(formData: FormData) {
   const houseRef = String(formData.get("houseId") ?? "").trim();
   const displayName = String(formData.get("displayName") ?? "").trim();
@@ -123,6 +149,12 @@ export async function switchHouseAction(formData: FormData) {
 
 export async function createActivityAction(activity: Activity, houseId: string) {
   const { supabase, user } = await getUserOrThrow();
+  if (
+    (activity.frequency === "weekly" || activity.frequency === "monthly") &&
+    (!Number.isInteger(activity.repeatOn) || activity.repeatOn === null)
+  ) {
+    throw new Error("Repeat date is required for weekly and monthly activities.");
+  }
   const { data: insertedActivity, error: activityError } = await supabase
     .from("activities")
     .insert({
@@ -134,6 +166,7 @@ export async function createActivityAction(activity: Activity, houseId: string) 
       reward_type: activity.rewardType,
       reward_amount: activity.rewardAmount,
       requires_approval: activity.requiresApproval,
+      repeat_on: activity.repeatOn ?? null,
       created_by: user.id,
     })
     .select("id")
@@ -161,6 +194,72 @@ export async function createActivityAction(activity: Activity, houseId: string) 
   revalidatePath("/");
 }
 
+export async function updateActivityAction(activity: Activity, houseId: string) {
+  const { supabase, user } = await getUserOrThrow();
+  if (
+    (activity.frequency === "weekly" || activity.frequency === "monthly") &&
+    (!Number.isInteger(activity.repeatOn) || activity.repeatOn === null)
+  ) {
+    throw new Error("Repeat date is required for weekly and monthly activities.");
+  }
+  const { data: currentMember, error: memberError } = await supabase
+    .from("house_members")
+    .select("role")
+    .eq("house_id", houseId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (memberError) {
+    throw new Error(memberError.message);
+  }
+
+  if (currentMember.role !== "admin" && currentMember.role !== "parent") {
+    throw new Error("Only parents and admins can edit activities.");
+  }
+
+  const { error } = await supabase
+    .from("activities")
+    .update({
+      name: activity.name,
+      description: activity.description ?? null,
+      frequency: activity.frequency,
+      repeat_on: activity.repeatOn ?? null,
+      reward_type: activity.rewardType,
+      reward_amount: activity.rewardAmount,
+      requires_approval: activity.requiresApproval,
+    })
+    .eq("id", activity.id)
+    .eq("house_id", houseId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const { error: deleteAssigneesError } = await supabase
+    .from("activity_assignees")
+    .delete()
+    .eq("activity_id", activity.id);
+
+  if (deleteAssigneesError) {
+    throw new Error(deleteAssigneesError.message);
+  }
+
+  if (activity.assigneeIds.length > 0) {
+    const { error: assigneeError } = await supabase.from("activity_assignees").insert(
+      activity.assigneeIds.map((memberId) => ({
+        activity_id: activity.id,
+        member_id: memberId,
+      })),
+    );
+
+    if (assigneeError) {
+      throw new Error(assigneeError.message);
+    }
+  }
+
+  revalidatePath("/");
+}
+
 export async function upsertCompletionAction({
   activity,
   member,
@@ -176,6 +275,24 @@ export async function upsertCompletionAction({
 }) {
   const { supabase, member: currentMember } = await getCurrentMember(houseId);
   const now = new Date().toISOString();
+
+  if (activity.frequency === "as-needed") {
+    const { error: ledgerError } = await supabase.from("ledger_entries").insert({
+      house_id: houseId,
+      member_id: member.id,
+      activity_id: activity.id,
+      type: activity.rewardType,
+      amount: activity.rewardAmount,
+      created_by_member_id: currentMember.id,
+    });
+
+    if (ledgerError) {
+      throw new Error(ledgerError.message);
+    }
+
+    revalidatePath("/");
+    return;
+  }
 
   const { error: completionError } = await supabase.from("completions").upsert(
     {

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   adjustBalanceAction,
   createActivityAction,
+  updateActivityAction,
   upsertCompletionAction,
 } from "@/app/actions";
 import type {
@@ -200,6 +201,9 @@ export function KidsPointsApp({
             activeMember={activeMember}
             onAddActivity={(activity) =>
               refreshAfter(createActivityAction(activity, house.id))
+            }
+            onUpdateActivity={(activity) =>
+              refreshAfter(updateActivityAction(activity, house.id))
             }
           />
         ) : null}

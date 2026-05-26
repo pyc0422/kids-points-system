@@ -17,6 +17,7 @@ export type Database = {
           frequency: Database["public"]["Enums"]["activity_frequency"];
           house_id: string;
           id: string;
+          repeat_on: number | null;
           name: string;
           requires_approval: boolean;
           reward_amount: number;
@@ -29,6 +30,7 @@ export type Database = {
           frequency: Database["public"]["Enums"]["activity_frequency"];
           house_id: string;
           id?: string;
+          repeat_on?: number | null;
           name: string;
           requires_approval?: boolean;
           reward_amount: number;

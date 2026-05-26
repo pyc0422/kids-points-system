@@ -1,9 +1,52 @@
 import { Check, Plus } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { Activity, HouseMember, RewardType } from "@/lib/domain";
+import { formatActivitySchedule, getActivityRepeatOptions } from "@/utils/activity";
 import { rewardLabel } from "@/utils/format";
 import { Avatar } from "./Avatar";
 import { Badge } from "./Badge";
+
+type ActivityDraft = {
+  id: string;
+  name: string;
+  description: string;
+  frequency: Activity["frequency"];
+  repeatOn: string;
+  rewardType: RewardType;
+  rewardAmount: string;
+  requiresApproval: boolean;
+  assigneeIds: string[];
+};
+
+function createDraft(kidIds: string[], activity?: Activity): ActivityDraft {
+  if (activity) {
+    return {
+      id: activity.id,
+      name: activity.name,
+      description: activity.description ?? "",
+      frequency: activity.frequency,
+      repeatOn:
+        activity.repeatOn?.toString() ??
+        (activity.frequency === "weekly" || activity.frequency === "monthly" ? "1" : ""),
+      rewardType: activity.rewardType,
+      rewardAmount: activity.rewardAmount.toString(),
+      requiresApproval: activity.requiresApproval,
+      assigneeIds: [...activity.assigneeIds],
+    };
+  }
+
+  return {
+    id: globalThis.crypto.randomUUID(),
+    name: "",
+    description: "",
+    frequency: "daily",
+    repeatOn: "",
+    rewardType: "points",
+    rewardAmount: "10",
+    requiresApproval: true,
+    assigneeIds: [...kidIds],
+  };
+}
 
 export function ActivitiesTab({
   activities,
@@ -11,51 +54,92 @@ export function ActivitiesTab({
   canAdd,
   activeMember,
   onAddActivity,
+  onUpdateActivity,
 }: {
   activities: Activity[];
   kids: HouseMember[];
   canAdd: boolean;
   activeMember?: HouseMember;
   onAddActivity: (activity: Activity) => void;
+  onUpdateActivity: (activity: Activity) => void;
 }) {
-  const [isAdding, setIsAdding] = useState(false);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [frequency, setFrequency] = useState<Activity["frequency"]>("daily");
-  const [rewardType, setRewardType] = useState<RewardType>("points");
-  const [rewardAmount, setRewardAmount] = useState("10");
-  const [requiresApproval, setRequiresApproval] = useState(true);
-  const kidMembers = kids.filter((kid) => kid.role === "kid");
-  const [assigneeIds, setAssigneeIds] = useState<string[]>(
-    kidMembers.map((kid) => kid.id),
+  const kidMembers = useMemo(() => kids.filter((kid) => kid.role === "kid"), [kids]);
+  const [draft, setDraft] = useState<ActivityDraft>(() =>
+    createDraft(kidMembers.map((kid) => kid.id)),
   );
+  const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+
   const visibleActivities =
     activeMember?.role === "kid"
       ? activities.filter((activity) => activity.assigneeIds.includes(activeMember.id))
       : activities;
-  const canSave =
-    name.trim().length > 0 &&
-    assigneeIds.length > 0 &&
-    Number.isFinite(Number(rewardAmount));
 
-  function resetForm() {
-    setName("");
-    setDescription("");
-    setFrequency("daily");
-    setRewardType("points");
-    setRewardAmount("10");
-    setRequiresApproval(true);
-    setAssigneeIds(kidMembers.map((kid) => kid.id));
+  const repeatOptions = getActivityRepeatOptions(draft.frequency);
+  const needsRepeatOn = draft.frequency === "weekly" || draft.frequency === "monthly";
+  const canSave =
+    draft.name.trim().length > 0 &&
+    draft.assigneeIds.length > 0 &&
+    Number.isFinite(Number(draft.rewardAmount)) &&
+    (!needsRepeatOn || draft.repeatOn.length > 0);
+
+  function resetDraft(activity?: Activity) {
+    setDraft(createDraft(kidMembers.map((kid) => kid.id), activity));
+  }
+
+  function openCreateForm() {
+    setEditingActivityId(null);
+    resetDraft();
+    setIsFormOpen(true);
+  }
+
+  function openEditForm(activity: Activity) {
+    setEditingActivityId(activity.id);
+    resetDraft(activity);
+    setIsFormOpen(true);
+  }
+
+  function closeForm() {
+    setIsFormOpen(false);
+    setEditingActivityId(null);
+    resetDraft();
   }
 
   function toggleAssignee(memberId: string) {
-    setAssigneeIds((current) => {
-      if (current.includes(memberId)) {
-        return current.filter((id) => id !== memberId);
+    setDraft((current) => {
+      if (current.assigneeIds.includes(memberId)) {
+        return { ...current, assigneeIds: current.assigneeIds.filter((id) => id !== memberId) };
       }
 
-      return [...current, memberId];
+      return { ...current, assigneeIds: [...current.assigneeIds, memberId] };
     });
+  }
+
+  function saveActivity() {
+    const repeatOn =
+      draft.frequency === "weekly" || draft.frequency === "monthly"
+        ? Number(draft.repeatOn)
+        : null;
+
+    const activity: Activity = {
+      id: draft.id,
+      name: draft.name.trim(),
+      description: draft.description.trim() || undefined,
+      assigneeIds: draft.assigneeIds,
+      frequency: draft.frequency,
+      repeatOn,
+      rewardType: draft.rewardType,
+      rewardAmount: Number(draft.rewardAmount),
+      requiresApproval: draft.requiresApproval,
+    };
+
+    if (editingActivityId) {
+      onUpdateActivity(activity);
+    } else {
+      onAddActivity(activity);
+    }
+
+    closeForm();
   }
 
   return (
@@ -70,7 +154,7 @@ export function ActivitiesTab({
         {canAdd ? (
           <button
             type="button"
-            onClick={() => setIsAdding(true)}
+            onClick={openCreateForm}
             className="inline-flex h-10 w-fit items-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-700"
           >
             <Plus aria-hidden className="size-4" />
@@ -79,7 +163,7 @@ export function ActivitiesTab({
         ) : null}
       </div>
 
-      {isAdding ? (
+      {isFormOpen ? (
         <form
           className="mb-5 rounded-lg border border-zinc-200 bg-zinc-50 p-4"
           onSubmit={(event) => {
@@ -88,35 +172,44 @@ export function ActivitiesTab({
               return;
             }
 
-            onAddActivity({
-              id: globalThis.crypto.randomUUID(),
-              name: name.trim(),
-              description: description.trim() || undefined,
-              assigneeIds,
-              frequency,
-              rewardType,
-              rewardAmount: Number(rewardAmount),
-              requiresApproval,
-            });
-            resetForm();
-            setIsAdding(false);
+            saveActivity();
           }}
         >
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-semibold">
+                {editingActivityId ? "Edit Activity" : "Add Activity"}
+              </h3>
+              <p className="text-sm text-zinc-500">
+                {editingActivityId ? "Update the schedule or assignees." : "Create a new goal or chore."}
+              </p>
+            </div>
+          </div>
+
           <div className="grid gap-4 lg:grid-cols-2">
             <label className="block">
               <span className="mb-2 block text-sm font-semibold">Name</span>
               <input
-                value={name}
-                onChange={(event) => setName(event.target.value)}
+                value={draft.name}
+                onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
                 className="h-11 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-zinc-950"
               />
             </label>
             <label className="block">
               <span className="mb-2 block text-sm font-semibold">Frequency</span>
               <select
-                value={frequency}
+                value={draft.frequency}
                 onChange={(event) =>
-                  setFrequency(event.target.value as Activity["frequency"])
+                  setDraft((current) => ({
+                    ...current,
+                    frequency: event.target.value as Activity["frequency"],
+                    repeatOn:
+                      event.target.value === "weekly"
+                        ? "1"
+                        : event.target.value === "monthly"
+                          ? "1"
+                          : "",
+                  }))
                 }
                 className="h-11 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-zinc-950"
               >
@@ -127,15 +220,40 @@ export function ActivitiesTab({
                 <option value="monthly">Monthly</option>
               </select>
             </label>
+
+            {needsRepeatOn ? (
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold">
+                  {draft.frequency === "weekly" ? "Repeat on" : "Repeat day"}
+                </span>
+                <select
+                  value={draft.repeatOn}
+                  onChange={(event) =>
+                    setDraft((current) => ({ ...current, repeatOn: event.target.value }))
+                  }
+                  className="h-11 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-zinc-950"
+                >
+                  {repeatOptions.map((option) => (
+                    <option key={option.value} value={String(option.value)}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+
             <label className="block lg:col-span-2">
               <span className="mb-2 block text-sm font-semibold">Description</span>
               <textarea
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
+                value={draft.description}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, description: event.target.value }))
+                }
                 rows={3}
                 className="w-full resize-none rounded-md border border-zinc-300 bg-white p-3 text-sm outline-none focus:border-zinc-950"
               />
             </label>
+
             <fieldset>
               <legend className="mb-2 text-sm font-semibold">Reward type</legend>
               <div className="flex gap-2">
@@ -143,7 +261,7 @@ export function ActivitiesTab({
                   <label
                     key={type}
                     className={`inline-flex h-10 cursor-pointer items-center rounded-md border px-3 text-sm font-semibold capitalize ${
-                      rewardType === type
+                      draft.rewardType === type
                         ? "border-zinc-950 bg-zinc-950 text-white"
                         : "border-zinc-200 bg-white text-zinc-700"
                     }`}
@@ -152,8 +270,8 @@ export function ActivitiesTab({
                       type="radio"
                       name="rewardType"
                       value={type}
-                      checked={rewardType === type}
-                      onChange={() => setRewardType(type)}
+                      checked={draft.rewardType === type}
+                      onChange={() => setDraft((current) => ({ ...current, rewardType: type }))}
                       className="sr-only"
                     />
                     {type}
@@ -161,16 +279,20 @@ export function ActivitiesTab({
                 ))}
               </div>
             </fieldset>
+
             <label className="block">
               <span className="mb-2 block text-sm font-semibold">Reward amount</span>
               <input
                 type="number"
-                value={rewardAmount}
-                onChange={(event) => setRewardAmount(event.target.value)}
-                step={rewardType === "money" ? "0.01" : "1"}
+                value={draft.rewardAmount}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, rewardAmount: event.target.value }))
+                }
+                step={draft.rewardType === "money" ? "0.01" : "1"}
                 className="h-11 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-zinc-950"
               />
             </label>
+
             <fieldset className="lg:col-span-2">
               <legend className="mb-2 text-sm font-semibold">Assignees</legend>
               <div className="flex flex-wrap gap-2">
@@ -178,14 +300,14 @@ export function ActivitiesTab({
                   <label
                     key={kid.id}
                     className={`inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border px-3 text-sm font-semibold ${
-                      assigneeIds.includes(kid.id)
+                      draft.assigneeIds.includes(kid.id)
                         ? "border-zinc-950 bg-white"
                         : "border-zinc-200 bg-white text-zinc-500"
                     }`}
                   >
                     <input
                       type="checkbox"
-                      checked={assigneeIds.includes(kid.id)}
+                      checked={draft.assigneeIds.includes(kid.id)}
                       onChange={() => toggleAssignee(kid.id)}
                       className="size-4"
                     />
@@ -195,16 +317,20 @@ export function ActivitiesTab({
                 ))}
               </div>
             </fieldset>
+
             <label className="inline-flex w-fit items-center gap-2 text-sm font-semibold">
               <input
                 type="checkbox"
-                checked={requiresApproval}
-                onChange={(event) => setRequiresApproval(event.target.checked)}
+                checked={draft.requiresApproval}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, requiresApproval: event.target.checked }))
+                }
                 className="size-4"
               />
               Requires approval
             </label>
           </div>
+
           <div className="mt-5 flex flex-wrap gap-2">
             <button
               type="submit"
@@ -212,14 +338,11 @@ export function ActivitiesTab({
               className="inline-flex h-10 items-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:bg-zinc-300"
             >
               <Check aria-hidden className="size-4" />
-              Save Activity
+              {editingActivityId ? "Save Changes" : "Save Activity"}
             </button>
             <button
               type="button"
-              onClick={() => {
-                resetForm();
-                setIsAdding(false);
-              }}
+              onClick={closeForm}
               className="inline-flex h-10 items-center rounded-md border border-zinc-200 bg-white px-4 text-sm font-semibold transition hover:bg-zinc-100"
             >
               Cancel
@@ -232,12 +355,27 @@ export function ActivitiesTab({
         {visibleActivities.map((activity) => (
           <article
             key={activity.id}
-            className="grid gap-3 rounded-lg border border-zinc-200 p-4 lg:grid-cols-[1fr_240px]"
+            role={canAdd ? "button" : undefined}
+            tabIndex={canAdd ? 0 : undefined}
+            onClick={canAdd ? () => openEditForm(activity) : undefined}
+            onKeyDown={
+              canAdd
+                ? (event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      openEditForm(activity);
+                    }
+                  }
+                : undefined
+            }
+            className={`grid gap-3 rounded-lg border p-4 lg:grid-cols-[1fr_240px] ${
+              canAdd ? "cursor-pointer border-zinc-200 hover:border-zinc-950 hover:bg-zinc-50" : "border-zinc-200"
+            }`}
           >
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-semibold">{activity.name}</h3>
-                <Badge>{activity.frequency.replace("-", " ")}</Badge>
+                <Badge>{formatActivitySchedule(activity)}</Badge>
                 <Badge tone={activity.rewardType === "points" ? "blue" : "green"}>
                   {rewardLabel(activity.rewardType, activity.rewardAmount)}
                 </Badge>

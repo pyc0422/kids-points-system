@@ -30,6 +30,7 @@ export type Activity = {
   description?: string;
   assigneeIds: string[];
   frequency: ActivityFrequency;
+  repeatOn?: number | null;
   rewardType: RewardType;
   rewardAmount: number;
   requiresApproval: boolean;

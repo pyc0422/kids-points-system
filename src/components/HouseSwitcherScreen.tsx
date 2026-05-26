@@ -1,17 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { createHouseAction, joinHouseAction, switchHouseAction } from "@/app/actions";
-import type { JoinedHouse } from "@/lib/supabase/queries";
+import {
+  createHouseAction,
+  joinHouseAction,
+  switchHouseAction,
+  updateHouseAction,
+} from "@/app/actions";
+import type { JoinedHouse } from "@/lib/bff/family";
 
 export function HouseSwitcherScreen({
   defaultDisplayName,
   joinedHouses,
   activeHouseId,
+  activeHouse,
+  activeMemberRole,
 }: {
   defaultDisplayName?: string | null;
   joinedHouses: JoinedHouse[];
   activeHouseId: string | null;
+  activeHouse?: { id: string; name: string; inviteCode: string } | null;
+  activeMemberRole?: string | null;
 }) {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedHouseId, setSelectedHouseId] = useState(
@@ -127,6 +136,36 @@ export function HouseSwitcherScreen({
             </form>
           ) : null}
         </div>
+
+        {activeHouse && activeMemberRole === "admin" ? (
+          <div className="mt-8 border-t border-zinc-200 pt-6">
+            <h2 className="text-lg font-semibold">House settings</h2>
+            <p className="mt-1 text-sm text-zinc-500">
+              Only admins can edit the current house name.
+            </p>
+            <form action={updateHouseAction} className="mt-4 space-y-4">
+              <input type="hidden" name="houseId" value={activeHouse.id} />
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold">House name</span>
+                <input
+                  name="houseName"
+                  defaultValue={activeHouse.name}
+                  className="h-11 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-zinc-950"
+                />
+              </label>
+              <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-600">
+                <span className="block font-semibold text-zinc-950">Invite code</span>
+                <span>{activeHouse.inviteCode}</span>
+              </div>
+              <button
+                type="submit"
+                className="inline-flex h-10 items-center rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-700"
+              >
+                Save house settings
+              </button>
+            </form>
+          </div>
+        ) : null}
       </section>
     </main>
   );

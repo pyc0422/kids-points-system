@@ -38,6 +38,7 @@ export function mapActivity(
     description: row.description ?? undefined,
     assigneeIds,
     frequency: row.frequency,
+    repeatOn: row.repeat_on ?? null,
     rewardType: row.reward_type,
     rewardAmount: Number(row.reward_amount),
     requiresApproval: row.requires_approval,

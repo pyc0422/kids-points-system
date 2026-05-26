@@ -2,7 +2,7 @@ import { AuthScreen } from "@/components/AuthScreen";
 import { HouseSetupScreen } from "@/components/HouseSetupScreen";
 import { KidsPointsApp } from "@/components/KidsPointsApp";
 import { createClient } from "@/lib/supabase/server";
-import { getAppData } from "@/lib/supabase/queries";
+import { getAppData } from "@/lib/bff/family";
 
 export default async function Home() {
   const supabase = await createClient();
