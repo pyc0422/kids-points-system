@@ -18,6 +18,7 @@ import type {
   MemberSummary,
   RewardType,
 } from "@/lib/domain";
+import type { JoinedHouse } from "@/lib/bff/family";
 import type { BalanceMode, TabId } from "@/utils/app-types";
 import { getCompletion, isActivityDue } from "@/utils/activity";
 import { demoToday, tabs } from "@/utils/constants";
@@ -31,29 +32,42 @@ import { HomeTab } from "./HomeTab";
 
 export function KidsPointsApp({
   house,
+  activeHouseId,
   activeMember,
+  joinedHouses,
+  viewerEmail,
+  viewerFullName,
   members,
   activities,
   completions,
   ledgerEntries,
-}: {
+}: Readonly<{
   house: House;
+  activeHouseId: string;
   activeMember: HouseMember;
+  joinedHouses: JoinedHouse[];
+  viewerEmail: string;
+  viewerFullName: string;
   members: HouseMember[];
   activities: Activity[];
   completions: Completion[];
   ledgerEntries: LedgerEntry[];
-}) {
+}>) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState<TabId>("home");
   const kids = members.filter((member) => member.role === "kid");
   const [selectedKidId, setSelectedKidId] = useState(kids[0]?.id ?? "");
-  const [selectedBalanceKidId, setSelectedBalanceKidId] = useState(kids[0]?.id ?? "");
+  const [selectedBalanceKidId, setSelectedBalanceKidId] = useState(
+    kids[0]?.id ?? "",
+  );
   const [balanceMode, setBalanceMode] = useState<BalanceMode>("list");
-  const [selectedChartKidId, setSelectedChartKidId] = useState(kids[0]?.id ?? "");
+  const [selectedChartKidId, setSelectedChartKidId] = useState(
+    kids[0]?.id ?? "",
+  );
   const [weekOffset, setWeekOffset] = useState(0);
-  const canReview = activeMember.role === "admin" || activeMember.role === "parent";
+  const canReview =
+    activeMember.role === "admin" || activeMember.role === "parent";
   const canManageBalances = canReview;
   const visibleKids = activeMember.role === "kid" ? [activeMember] : kids;
   const currentSelectedKid =
@@ -64,11 +78,15 @@ export function KidsPointsApp({
     ? tabs
     : tabs.filter((tab) => tab.id !== "balances");
   const weekStart = addDays(startOfWeek(demoToday), weekOffset * 7);
-  const weekDays = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
+  const weekDays = Array.from({ length: 7 }, (_, index) =>
+    addDays(weekStart, index),
+  );
 
   const summaries = useMemo<MemberSummary[]>(() => {
     return kids.map((kid) => {
-      const kidLedger = ledgerEntries.filter((entry) => entry.memberId === kid.id);
+      const kidLedger = ledgerEntries.filter(
+        (entry) => entry.memberId === kid.id,
+      );
       const kidCompletions = completions.filter(
         (completion) => completion.memberId === kid.id,
       );
@@ -112,7 +130,9 @@ export function KidsPointsApp({
         await action;
         router.refresh();
       } catch (error) {
-        window.alert(error instanceof Error ? error.message : "Something went wrong.");
+        window.alert(
+          error instanceof Error ? error.message : "Something went wrong.",
+        );
       }
     });
   }
@@ -169,9 +189,13 @@ export function KidsPointsApp({
     <main className="min-h-screen bg-[#f7f5ef] text-zinc-950">
       <AppHeader
         activeMember={activeMember}
+        activeHouseId={activeHouseId}
+        activeHouseLabel={`${house.name} · Invite ${house.inviteCode}`}
         activeTab={activeTab}
         availableTabs={availableTabs}
-        houseLabel={`${house.name} · Invite ${house.inviteCode}`}
+        joinedHouses={joinedHouses}
+        viewerEmail={viewerEmail}
+        viewerFullName={viewerFullName}
         onTabChange={handleTabChange}
       />
 

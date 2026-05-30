@@ -1,4 +1,10 @@
-import type { Activity, Completion, House, HouseMember, LedgerEntry } from "@/lib/domain";
+import type {
+  Activity,
+  Completion,
+  House,
+  HouseMember,
+  LedgerEntry,
+} from "@/lib/domain";
 import { createClient } from "@/lib/supabase/server";
 import {
   mapActivity,
@@ -8,18 +14,20 @@ import {
   mapLedgerEntry,
 } from "@/lib/supabase/mappers";
 
+export type JoinedHouse = {
+  house: House;
+  member: HouseMember;
+};
+
 export type AppData = {
   house: House;
+  activeHouseId: string;
   activeMember: HouseMember;
   members: HouseMember[];
   activities: Activity[];
   completions: Completion[];
   ledgerEntries: LedgerEntry[];
-};
-
-export type JoinedHouse = {
-  house: House;
-  member: HouseMember;
+  joinedHouses: JoinedHouse[];
 };
 
 export type HouseSwitchData = {
@@ -51,21 +59,26 @@ export async function getAppData(userId: string): Promise<AppData | null> {
     return null;
   }
 
-  const preferredHouseId =
+  const activeHouseId =
     profileResult.data?.active_house_id &&
-    memberships.some((membership) => membership.house_id === profileResult.data?.active_house_id)
+    memberships.some(
+      (membership) => membership.house_id === profileResult.data?.active_house_id,
+    )
       ? profileResult.data.active_house_id
       : memberships[0].house_id;
 
-  const activeMembership = memberships.find((membership) => membership.house_id === preferredHouseId);
+  const activeMembership = memberships.find(
+    (membership) => membership.house_id === activeHouseId,
+  );
 
   if (!activeMembership) {
     return null;
   }
 
-  const [houseResult, membersResult, activitiesResult, ledgerResult] =
+  const [houseResult, joinedHousesResult, membersResult, activitiesResult, ledgerResult] =
     await Promise.all([
       supabase.from("houses").select("*").eq("id", activeMembership.house_id).single(),
+      supabase.from("houses").select("*").in("id", memberships.map((membership) => membership.house_id)),
       supabase
         .from("house_members")
         .select("*")
@@ -85,6 +98,9 @@ export async function getAppData(userId: string): Promise<AppData | null> {
 
   if (houseResult.error) {
     throw new Error(houseResult.error.message);
+  }
+  if (joinedHousesResult.error) {
+    throw new Error(joinedHousesResult.error.message);
   }
   if (membersResult.error) {
     throw new Error(membersResult.error.message);
@@ -124,8 +140,11 @@ export async function getAppData(userId: string): Promise<AppData | null> {
     assigneesByActivity.set(assignee.activity_id, [...existing, assignee.member_id]);
   });
 
+  const housesById = new Map(joinedHousesResult.data.map((house) => [house.id, house]));
+
   return {
     house: mapHouse(houseResult.data),
+    activeHouseId,
     activeMember: mapHouseMember(activeMembership),
     members: membersResult.data.map(mapHouseMember),
     activities: activitiesResult.data.map((activity) =>
@@ -133,6 +152,19 @@ export async function getAppData(userId: string): Promise<AppData | null> {
     ),
     completions: completionsResult.data.map(mapCompletion),
     ledgerEntries: ledgerResult.data.map(mapLedgerEntry),
+    joinedHouses: memberships
+      .map((membership) => {
+        const house = housesById.get(membership.house_id);
+        if (!house) {
+          return null;
+        }
+
+        return {
+          house: mapHouse(house),
+          member: mapHouseMember(membership),
+        };
+      })
+      .filter((entry): entry is JoinedHouse => entry !== null),
   };
 }
 

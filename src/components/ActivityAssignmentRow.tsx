@@ -24,7 +24,7 @@ export function ActivityAssignmentRow({
   canReview,
   onSubmit,
   onReview,
-}: {
+}: Readonly<{
   activity: Activity;
   member: HouseMember;
   activeMember?: HouseMember;
@@ -36,7 +36,7 @@ export function ActivityAssignmentRow({
     member: HouseMember,
     status: CompletionStatus,
   ) => void;
-}) {
+}>) {
   const status = completion?.status ?? "pending";
   const isRepeatable = activity.frequency === "as-needed";
   const isCompleted = status === "submitted" || status === "approved";
@@ -57,7 +57,9 @@ export function ActivityAssignmentRow({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className={`font-semibold ${isCompleted && !isRepeatable ? "line-through" : ""}`}>
+            <h3
+              className={`font-semibold ${isCompleted && !isRepeatable ? "line-through" : ""}`}
+            >
               {activity.name}
             </h3>
             <Badge>{activity.frequency.replace("-", " ")}</Badge>

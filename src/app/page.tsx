@@ -24,5 +24,11 @@ export default async function Home() {
     );
   }
 
-  return <KidsPointsApp {...appData} />;
+  return (
+    <KidsPointsApp
+      {...appData}
+      viewerEmail={user.email ?? ""}
+      viewerFullName={user.user_metadata.full_name ?? user.email ?? appData.activeMember.name}
+    />
+  );
 }
