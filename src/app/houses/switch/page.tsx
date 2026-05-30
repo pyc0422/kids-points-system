@@ -24,17 +24,11 @@ export default async function HouseSwitchPage() {
     );
   }
 
-  const currentEntry =
-    switchData.joinedHouses.find((entry) => entry.house.id === switchData.activeHouseId) ??
-    switchData.joinedHouses[0];
-
   return (
     <HouseSwitcherScreen
       defaultDisplayName={user.user_metadata.full_name ?? user.email}
       joinedHouses={switchData.joinedHouses}
       activeHouseId={switchData.activeHouseId}
-      activeHouse={currentEntry?.house ?? null}
-      activeMemberRole={currentEntry?.member.role ?? null}
     />
   );
 }

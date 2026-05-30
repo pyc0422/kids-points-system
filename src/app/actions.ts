@@ -70,17 +70,38 @@ export async function updateHouseAction(formData: FormData) {
     throw new Error("Only admins can edit house settings.");
   }
 
-  const { error } = await supabase
-    .from("houses")
-    .update({ name: houseName })
-    .eq("id", houseId);
+  const memberRoles = Array.from(formData.entries())
+    .filter(([key]) => key.startsWith("role_"))
+    .map(([key, value]) => ({
+      member_id: key.replace("role_", ""),
+      role: String(value).trim(),
+    }))
+    .filter((entry) => entry.member_id.length > 0);
 
-  if (error) {
-    throw new Error(error.message);
+  if (memberRoles.length > 0) {
+    const { error } = await supabase.rpc("update_house_details" as never, {
+      p_house_id: houseId,
+      p_house_name: houseName,
+      p_member_roles: memberRoles,
+    } as never);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  } else {
+    const { error } = await supabase
+      .from("houses")
+      .update({ name: houseName })
+      .eq("id", houseId);
+
+    if (error) {
+      throw new Error(error.message);
+    }
   }
 
   revalidatePath("/");
-  redirect("/houses/switch");
+  revalidatePath(`/houses/${houseId}/edit`);
+  redirect(`/houses/${houseId}/edit`);
 }
 
 export async function joinHouseAction(formData: FormData) {

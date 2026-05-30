@@ -35,6 +35,12 @@ export type HouseSwitchData = {
   joinedHouses: JoinedHouse[];
 };
 
+export type HouseEditData = {
+  house: House;
+  member: HouseMember;
+  members: HouseMember[];
+};
+
 export async function getAppData(userId: string): Promise<AppData | null> {
   const supabase = await createClient();
 
@@ -225,5 +231,48 @@ export async function getHouseSwitchData(userId: string): Promise<HouseSwitchDat
         };
       })
       .filter((entry): entry is JoinedHouse => entry !== null),
+  };
+}
+
+export async function getHouseEditData(
+  userId: string,
+  houseId: string,
+): Promise<HouseEditData | null> {
+  const supabase = await createClient();
+
+  const [{ data: member, error: memberError }, { data: house, error: houseError }, { data: members, error: membersError }] =
+    await Promise.all([
+      supabase
+        .from("house_members")
+        .select("*")
+        .eq("house_id", houseId)
+        .eq("user_id", userId)
+        .maybeSingle(),
+      supabase.from("houses").select("*").eq("id", houseId).maybeSingle(),
+      supabase
+        .from("house_members")
+        .select("*")
+        .eq("house_id", houseId)
+        .order("created_at", { ascending: true }),
+    ]);
+
+  if (memberError) {
+    throw new Error(memberError.message);
+  }
+  if (houseError) {
+    throw new Error(houseError.message);
+  }
+  if (membersError) {
+    throw new Error(membersError.message);
+  }
+
+  if (!member || !house || member.role !== "admin") {
+    return null;
+  }
+
+  return {
+    house: mapHouse(house),
+    member: mapHouseMember(member),
+    members: members.map(mapHouseMember),
   };
 }

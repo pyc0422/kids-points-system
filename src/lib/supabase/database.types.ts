@@ -175,6 +175,14 @@ export type Database = {
         };
         Returns: Database["public"]["Tables"]["houses"]["Row"];
       };
+      update_house_details: {
+        Args: {
+          p_house_id: string;
+          p_house_name: string;
+          p_member_roles: Json;
+        };
+        Returns: Database["public"]["Tables"]["houses"]["Row"];
+      };
     };
     Enums: {
       activity_frequency: "as-needed" | "weekdays" | "daily" | "weekly" | "monthly";

@@ -30,6 +30,7 @@ In Supabase, open **SQL Editor** and run these files in order:
 3. `supabase/migrations/0003_join_house_rpc.sql`
 4. `supabase/migrations/0005_active_house_and_multi_membership.sql`
 5. `supabase/migrations/0006_activity_repeat_on.sql`
+6. `supabase/migrations/0007_update_house_details_rpc.sql`
 
 The migration creates:
 
@@ -41,6 +42,7 @@ The migration creates:
 - Row Level Security policies
 - a `create_house(house_name, display_name)` RPC that creates the first admin member
 - a `join_house(house_ref, display_name, role)` RPC that accepts a house UUID or invite code
+- an `update_house_details(p_house_id, p_house_name, p_member_roles)` RPC for admin edits
 
 ## 4. Enable Google login
 

@@ -36,7 +36,6 @@ export function KidsPointsApp({
   activeMember,
   joinedHouses,
   viewerEmail,
-  viewerFullName,
   members,
   activities,
   completions,
@@ -47,7 +46,6 @@ export function KidsPointsApp({
   activeMember: HouseMember;
   joinedHouses: JoinedHouse[];
   viewerEmail: string;
-  viewerFullName: string;
   members: HouseMember[];
   activities: Activity[];
   completions: Completion[];
@@ -195,7 +193,6 @@ export function KidsPointsApp({
         availableTabs={availableTabs}
         joinedHouses={joinedHouses}
         viewerEmail={viewerEmail}
-        viewerFullName={viewerFullName}
         onTabChange={handleTabChange}
       />
 
