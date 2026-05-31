@@ -104,34 +104,6 @@ export async function updateHouseAction(formData: FormData) {
   redirect(`/houses/${houseId}/edit`);
 }
 
-export async function joinHouseAction(formData: FormData) {
-  const houseRef = String(formData.get("houseId") ?? "").trim();
-  const displayName = String(formData.get("displayName") ?? "").trim();
-  const roleValue = String(formData.get("role") ?? "kid").trim();
-
-  if (!houseRef || !displayName) {
-    throw new Error("House ID or invite code and display name are required.");
-  }
-
-  if (roleValue !== "kid" && roleValue !== "parent") {
-    throw new Error("Invalid role.");
-  }
-
-  const { supabase } = await getUserOrThrow();
-  const { error } = await supabase.rpc("join_house" as never, {
-    house_ref: houseRef,
-    display_name: displayName,
-    role: roleValue,
-  } as never);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  revalidatePath("/");
-  redirect("/");
-}
-
 export async function switchHouseAction(formData: FormData) {
   const houseId = String(formData.get("houseId") ?? "").trim();
 

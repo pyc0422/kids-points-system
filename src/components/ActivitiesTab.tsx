@@ -1,5 +1,5 @@
 import { Check, Plus } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Activity, HouseMember, RewardType } from "@/lib/domain";
 import { formatActivitySchedule, getActivityRepeatOptions } from "@/utils/activity";
 import { rewardLabel } from "@/utils/format";
@@ -83,9 +83,9 @@ export function ActivitiesTab({
     Number.isFinite(Number(draft.rewardAmount)) &&
     (!needsRepeatOn || draft.repeatOn.length > 0);
 
-  function resetDraft(activity?: Activity) {
+  const resetDraft = useCallback((activity?: Activity) => {
     setDraft(createDraft(kidMembers.map((kid) => kid.id), activity));
-  }
+  }, [kidMembers]);
 
   function openCreateForm() {
     setEditingActivityId(null);
@@ -99,11 +99,22 @@ export function ActivitiesTab({
     setIsFormOpen(true);
   }
 
-  function closeForm() {
+  const closeForm = useCallback(() => {
     setIsFormOpen(false);
     setEditingActivityId(null);
     resetDraft();
-  }
+  }, [resetDraft]);
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && isFormOpen) {
+        closeForm();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isFormOpen, closeForm]);
 
   function toggleAssignee(memberId: string) {
     setDraft((current) => {
@@ -164,191 +175,198 @@ export function ActivitiesTab({
       </div>
 
       {isFormOpen ? (
-        <form
-          className="mb-5 rounded-lg border border-zinc-200 bg-zinc-50 p-4"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!canSave) {
-              return;
-            }
-
-            saveActivity();
-          }}
+        <div
+          role="presentation"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-zinc-950/40 p-3 sm:items-center sm:p-6"
+          onClick={closeForm}
         >
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <h3 className="text-base font-semibold">
-                {editingActivityId ? "Edit Activity" : "Add Activity"}
-              </h3>
-              <p className="text-sm text-zinc-500">
-                {editingActivityId ? "Update the schedule or assignees." : "Create a new goal or chore."}
-              </p>
-            </div>
-          </div>
+          <form
+            className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl border border-zinc-200 bg-white p-4 shadow-2xl sm:p-5"
+            onClick={(event) => event.stopPropagation()}
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (!canSave) {
+                return;
+              }
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <label className="block">
-              <span className="mb-2 block text-sm font-semibold">Name</span>
-              <input
-                value={draft.name}
-                onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
-                className="h-11 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-zinc-950"
-              />
-            </label>
-            <label className="block">
-              <span className="mb-2 block text-sm font-semibold">Frequency</span>
-              <select
-                value={draft.frequency}
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    frequency: event.target.value as Activity["frequency"],
-                    repeatOn:
-                      event.target.value === "weekly"
-                        ? "1"
-                        : event.target.value === "monthly"
-                          ? "1"
-                          : "",
-                  }))
-                }
-                className="h-11 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-zinc-950"
+              saveActivity();
+            }}
+          >
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-base font-semibold">
+                  {editingActivityId ? "Edit Activity" : "Add Activity"}
+                </h3>
+                <p className="text-sm text-zinc-500">
+                  {editingActivityId ? "Update the schedule or assignees." : "Create a new goal or chore."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeForm}
+                className="inline-flex h-9 items-center rounded-md border border-zinc-200 bg-white px-3 text-sm font-semibold transition hover:bg-zinc-100"
               >
-                <option value="as-needed">As needed</option>
-                <option value="weekdays">Weekdays</option>
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-              </select>
-            </label>
+                Cancel
+              </button>
+            </div>
 
-            {needsRepeatOn ? (
+            <div className="grid gap-4 lg:grid-cols-2">
               <label className="block">
-                <span className="mb-2 block text-sm font-semibold">
-                  {draft.frequency === "weekly" ? "Repeat on" : "Repeat day"}
-                </span>
+                <span className="mb-2 block text-sm font-semibold">Name</span>
+                <input
+                  value={draft.name}
+                  onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
+                  className="h-11 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-zinc-950"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold">Frequency</span>
                 <select
-                  value={draft.repeatOn}
+                  value={draft.frequency}
                   onChange={(event) =>
-                    setDraft((current) => ({ ...current, repeatOn: event.target.value }))
+                    setDraft((current) => ({
+                      ...current,
+                      frequency: event.target.value as Activity["frequency"],
+                      repeatOn:
+                        event.target.value === "weekly"
+                          ? "1"
+                          : event.target.value === "monthly"
+                            ? "1"
+                            : "",
+                    }))
                   }
                   className="h-11 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-zinc-950"
                 >
-                  {repeatOptions.map((option) => (
-                    <option key={option.value} value={String(option.value)}>
-                      {option.label}
-                    </option>
-                  ))}
+                  <option value="as-needed">As needed</option>
+                  <option value="weekdays">Weekdays</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
                 </select>
               </label>
-            ) : null}
 
-            <label className="block lg:col-span-2">
-              <span className="mb-2 block text-sm font-semibold">Description</span>
-              <textarea
-                value={draft.description}
-                onChange={(event) =>
-                  setDraft((current) => ({ ...current, description: event.target.value }))
-                }
-                rows={3}
-                className="w-full resize-none rounded-md border border-zinc-300 bg-white p-3 text-sm outline-none focus:border-zinc-950"
-              />
-            </label>
-
-            <fieldset>
-              <legend className="mb-2 text-sm font-semibold">Reward type</legend>
-              <div className="flex gap-2">
-                {(["points", "money"] as RewardType[]).map((type) => (
-                  <label
-                    key={type}
-                    className={`inline-flex h-10 cursor-pointer items-center rounded-md border px-3 text-sm font-semibold capitalize ${
-                      draft.rewardType === type
-                        ? "border-zinc-950 bg-zinc-950 text-white"
-                        : "border-zinc-200 bg-white text-zinc-700"
-                    }`}
+              {needsRepeatOn ? (
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold">
+                    {draft.frequency === "weekly" ? "Repeat on" : "Repeat day"}
+                  </span>
+                  <select
+                    value={draft.repeatOn}
+                    onChange={(event) =>
+                      setDraft((current) => ({ ...current, repeatOn: event.target.value }))
+                    }
+                    className="h-11 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-zinc-950"
                   >
-                    <input
-                      type="radio"
-                      name="rewardType"
-                      value={type}
-                      checked={draft.rewardType === type}
-                      onChange={() => setDraft((current) => ({ ...current, rewardType: type }))}
-                      className="sr-only"
-                    />
-                    {type}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
+                    {repeatOptions.map((option) => (
+                      <option key={option.value} value={String(option.value)}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
 
-            <label className="block">
-              <span className="mb-2 block text-sm font-semibold">Reward amount</span>
-              <input
-                type="number"
-                value={draft.rewardAmount}
-                onChange={(event) =>
-                  setDraft((current) => ({ ...current, rewardAmount: event.target.value }))
-                }
-                step={draft.rewardType === "money" ? "0.01" : "1"}
-                className="h-11 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-zinc-950"
-              />
-            </label>
+              <label className="block lg:col-span-2">
+                <span className="mb-2 block text-sm font-semibold">Description</span>
+                <textarea
+                  value={draft.description}
+                  onChange={(event) =>
+                    setDraft((current) => ({ ...current, description: event.target.value }))
+                  }
+                  rows={3}
+                  className="w-full resize-none rounded-md border border-zinc-300 bg-white p-3 text-sm outline-none focus:border-zinc-950"
+                />
+              </label>
 
-            <fieldset className="lg:col-span-2">
-              <legend className="mb-2 text-sm font-semibold">Assignees</legend>
-              <div className="flex flex-wrap gap-2">
-                {kidMembers.map((kid) => (
-                  <label
-                    key={kid.id}
-                    className={`inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border px-3 text-sm font-semibold ${
-                      draft.assigneeIds.includes(kid.id)
-                        ? "border-zinc-950 bg-white"
-                        : "border-zinc-200 bg-white text-zinc-500"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={draft.assigneeIds.includes(kid.id)}
-                      onChange={() => toggleAssignee(kid.id)}
-                      className="size-4"
-                    />
-                    <Avatar member={kid} compact />
-                    {kid.name}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
+              <fieldset>
+                <legend className="mb-2 text-sm font-semibold">Reward type</legend>
+                <div className="flex gap-2">
+                  {(["points", "money"] as RewardType[]).map((type) => (
+                    <label
+                      key={type}
+                      className={`inline-flex h-10 cursor-pointer items-center rounded-md border px-3 text-sm font-semibold capitalize ${
+                        draft.rewardType === type
+                          ? "border-zinc-950 bg-zinc-950 text-white"
+                          : "border-zinc-200 bg-white text-zinc-700"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="rewardType"
+                        value={type}
+                        checked={draft.rewardType === type}
+                        onChange={() => setDraft((current) => ({ ...current, rewardType: type }))}
+                        className="sr-only"
+                      />
+                      {type}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
 
-            <label className="inline-flex w-fit items-center gap-2 text-sm font-semibold">
-              <input
-                type="checkbox"
-                checked={draft.requiresApproval}
-                onChange={(event) =>
-                  setDraft((current) => ({ ...current, requiresApproval: event.target.checked }))
-                }
-                className="size-4"
-              />
-              Requires approval
-            </label>
-          </div>
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold">Reward amount</span>
+                <input
+                  type="number"
+                  value={draft.rewardAmount}
+                  onChange={(event) =>
+                    setDraft((current) => ({ ...current, rewardAmount: event.target.value }))
+                  }
+                  step={draft.rewardType === "money" ? "0.01" : "1"}
+                  className="h-11 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-zinc-950"
+                />
+              </label>
 
-          <div className="mt-5 flex flex-wrap gap-2">
-            <button
-              type="submit"
-              disabled={!canSave}
-              className="inline-flex h-10 items-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:bg-zinc-300"
-            >
-              <Check aria-hidden className="size-4" />
-              {editingActivityId ? "Save Changes" : "Save Activity"}
-            </button>
-            <button
-              type="button"
-              onClick={closeForm}
-              className="inline-flex h-10 items-center rounded-md border border-zinc-200 bg-white px-4 text-sm font-semibold transition hover:bg-zinc-100"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
+              <fieldset className="lg:col-span-2">
+                <legend className="mb-2 text-sm font-semibold">Assignees</legend>
+                <div className="flex flex-wrap gap-2">
+                  {kidMembers.map((kid) => (
+                    <label
+                      key={kid.id}
+                      className={`inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border px-3 text-sm font-semibold ${
+                        draft.assigneeIds.includes(kid.id)
+                          ? "border-zinc-950 bg-white"
+                          : "border-zinc-200 bg-white text-zinc-500"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={draft.assigneeIds.includes(kid.id)}
+                        onChange={() => toggleAssignee(kid.id)}
+                        className="size-4"
+                      />
+                      <Avatar member={kid} compact />
+                      {kid.name}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              <label className="inline-flex w-fit items-center gap-2 text-sm font-semibold">
+                <input
+                  type="checkbox"
+                  checked={draft.requiresApproval}
+                  onChange={(event) =>
+                    setDraft((current) => ({ ...current, requiresApproval: event.target.checked }))
+                  }
+                  className="size-4"
+                />
+                Requires approval
+              </label>
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              <button
+                type="submit"
+                disabled={!canSave}
+                className="inline-flex h-10 items-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:bg-zinc-300"
+              >
+                <Check aria-hidden className="size-4" />
+                {editingActivityId ? "Save Changes" : "Save Activity"}
+              </button>
+            </div>
+          </form>
+        </div>
       ) : null}
 
       <div className="grid gap-3">

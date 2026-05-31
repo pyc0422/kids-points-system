@@ -4,7 +4,12 @@ import { KidsPointsApp } from "@/components/KidsPointsApp";
 import { createClient } from "@/lib/supabase/server";
 import { getAppData } from "@/lib/bff/family";
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ requestError?: string }>;
+}) {
+  const { requestError } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -25,6 +30,10 @@ export default async function Home() {
   }
 
   return (
-    <KidsPointsApp {...appData} viewerEmail={user.email ?? ""} />
+    <KidsPointsApp
+      {...appData}
+      viewerEmail={user.email ?? ""}
+      requestError={requestError}
+    />
   );
 }

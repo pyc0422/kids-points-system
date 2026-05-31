@@ -97,6 +97,32 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["house_members"]["Insert"]>;
         Relationships: [];
       };
+      house_join_requests: {
+        Row: {
+          created_at: string;
+          display_name: string;
+          house_id: string;
+          id: string;
+          requested_by: string;
+          reviewed_at: string | null;
+          reviewed_by_member_id: string | null;
+          role: Database["public"]["Enums"]["member_role"];
+          status: Database["public"]["Enums"]["house_join_request_status"];
+        };
+        Insert: {
+          created_at?: string;
+          display_name: string;
+          house_id: string;
+          id?: string;
+          requested_by: string;
+          reviewed_at?: string | null;
+          reviewed_by_member_id?: string | null;
+          role: Database["public"]["Enums"]["member_role"];
+          status?: Database["public"]["Enums"]["house_join_request_status"];
+        };
+        Update: Partial<Database["public"]["Tables"]["house_join_requests"]["Insert"]>;
+        Relationships: [];
+      };
       houses: {
         Row: {
           created_at: string;
@@ -167,6 +193,20 @@ export type Database = {
         };
         Returns: Database["public"]["Tables"]["houses"]["Row"];
       };
+      approve_join_request: {
+        Args: {
+          p_house_id: string;
+          p_request_id: string;
+        };
+        Returns: Database["public"]["Tables"]["house_join_requests"]["Row"];
+      };
+      deny_join_request: {
+        Args: {
+          p_house_id: string;
+          p_request_id: string;
+        };
+        Returns: Database["public"]["Tables"]["house_join_requests"]["Row"];
+      };
       join_house: {
         Args: {
           house_ref: string;
@@ -174,6 +214,21 @@ export type Database = {
           role: Database["public"]["Enums"]["member_role"];
         };
         Returns: Database["public"]["Tables"]["houses"]["Row"];
+      };
+      remove_house_member: {
+        Args: {
+          p_house_id: string;
+          p_member_id: string;
+        };
+        Returns: Database["public"]["Tables"]["house_members"]["Row"];
+      };
+      request_join_house: {
+        Args: {
+          p_display_name: string;
+          p_house_ref: string;
+          p_role: Database["public"]["Enums"]["member_role"];
+        };
+        Returns: Database["public"]["Tables"]["house_join_requests"]["Row"];
       };
       update_house_details: {
         Args: {
@@ -187,6 +242,7 @@ export type Database = {
     Enums: {
       activity_frequency: "as-needed" | "weekdays" | "daily" | "weekly" | "monthly";
       completion_status: "pending" | "submitted" | "approved" | "rejected";
+      house_join_request_status: "pending" | "approved" | "denied";
       member_role: "admin" | "parent" | "kid";
       reward_type: "points" | "money";
     };

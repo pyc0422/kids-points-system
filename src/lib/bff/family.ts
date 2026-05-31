@@ -1,6 +1,7 @@
 import type {
   Activity,
   Completion,
+  HouseJoinRequest,
   House,
   HouseMember,
   LedgerEntry,
@@ -9,6 +10,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   mapActivity,
   mapCompletion,
+  mapHouseJoinRequest,
   mapHouse,
   mapHouseMember,
   mapLedgerEntry,
@@ -28,6 +30,7 @@ export type AppData = {
   completions: Completion[];
   ledgerEntries: LedgerEntry[];
   joinedHouses: JoinedHouse[];
+  pendingJoinRequests: HouseJoinRequest[];
 };
 
 export type HouseSwitchData = {
@@ -39,6 +42,13 @@ export type HouseEditData = {
   house: House;
   member: HouseMember;
   members: HouseMember[];
+};
+
+export type HouseJoinRequestsData = {
+  house: House;
+  member: HouseMember;
+  joinedHouses: JoinedHouse[];
+  requests: HouseJoinRequest[];
 };
 
 export async function getAppData(userId: string): Promise<AppData | null> {
@@ -148,7 +158,7 @@ export async function getAppData(userId: string): Promise<AppData | null> {
 
   const housesById = new Map(joinedHousesResult.data.map((house) => [house.id, house]));
 
-  return {
+  const baseResult: AppData = {
     house: mapHouse(houseResult.data),
     activeHouseId,
     activeMember: mapHouseMember(activeMembership),
@@ -171,7 +181,28 @@ export async function getAppData(userId: string): Promise<AppData | null> {
         };
       })
       .filter((entry): entry is JoinedHouse => entry !== null),
+    pendingJoinRequests: [],
   };
+
+  if (baseResult.activeMember.role === "admin") {
+    const { data: joinRequests, error: joinRequestsError } = await supabase
+      .from("house_join_requests")
+      .select("*")
+      .eq("house_id", baseResult.activeHouseId)
+      .eq("status", "pending")
+      .order("created_at", { ascending: true });
+
+    if (joinRequestsError) {
+      throw new Error(joinRequestsError.message);
+    }
+
+    return {
+      ...baseResult,
+      pendingJoinRequests: joinRequests.map(mapHouseJoinRequest),
+    };
+  }
+
+  return baseResult;
 }
 
 export async function getHouseSwitchData(userId: string): Promise<HouseSwitchData> {
@@ -274,5 +305,59 @@ export async function getHouseEditData(
     house: mapHouse(house),
     member: mapHouseMember(member),
     members: members.map(mapHouseMember),
+  };
+}
+
+export async function getHouseJoinRequestsData(
+  userId: string,
+  houseId: string,
+): Promise<HouseJoinRequestsData | null> {
+  const supabase = await createClient();
+
+  const [memberResult, houseResult, membersResult, requestsResult] = await Promise.all([
+    supabase
+      .from("house_members")
+      .select("*")
+      .eq("house_id", houseId)
+      .eq("user_id", userId)
+      .maybeSingle(),
+    supabase.from("houses").select("*").eq("id", houseId).maybeSingle(),
+    supabase
+      .from("house_members")
+      .select("*")
+      .eq("house_id", houseId)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("house_join_requests")
+      .select("*")
+      .eq("house_id", houseId)
+      .eq("status", "pending")
+      .order("created_at", { ascending: true }),
+  ]);
+
+  if (memberResult.error) {
+    throw new Error(memberResult.error.message);
+  }
+  if (houseResult.error) {
+    throw new Error(houseResult.error.message);
+  }
+  if (membersResult.error) {
+    throw new Error(membersResult.error.message);
+  }
+  if (requestsResult.error) {
+    throw new Error(requestsResult.error.message);
+  }
+
+  if (!memberResult.data || !houseResult.data || memberResult.data.role !== "admin") {
+    return null;
+  }
+
+  const switchData = await getHouseSwitchData(userId);
+
+  return {
+    house: mapHouse(houseResult.data),
+    member: mapHouseMember(memberResult.data),
+    joinedHouses: switchData.joinedHouses,
+    requests: requestsResult.data.map(mapHouseJoinRequest),
   };
 }

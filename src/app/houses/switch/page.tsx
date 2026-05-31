@@ -4,7 +4,12 @@ import { HouseSwitcherScreen } from "@/components/HouseSwitcherScreen";
 import { createClient } from "@/lib/supabase/server";
 import { getHouseSwitchData } from "@/lib/bff/family";
 
-export default async function HouseSwitchPage() {
+export default async function HouseSwitchPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ request?: string; requestError?: string }>;
+}) {
+  const { request, requestError } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -20,6 +25,8 @@ export default async function HouseSwitchPage() {
     return (
       <HouseSetupScreen
         defaultDisplayName={user.user_metadata.full_name ?? user.email}
+        requestSent={request === "sent"}
+        requestError={requestError}
       />
     );
   }
@@ -29,6 +36,8 @@ export default async function HouseSwitchPage() {
       defaultDisplayName={user.user_metadata.full_name ?? user.email}
       joinedHouses={switchData.joinedHouses}
       activeHouseId={switchData.activeHouseId}
+      requestSent={request === "sent"}
+      requestError={requestError}
     />
   );
 }

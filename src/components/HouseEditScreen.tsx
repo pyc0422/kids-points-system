@@ -1,4 +1,4 @@
-import { HomeIcon, Shield } from "lucide-react";
+import { HomeIcon, Shield, Trash2 } from "lucide-react";
 import type { HouseEditData } from "@/lib/bff/family";
 import { updateHouseAction } from "@/app/actions";
 import type { Role } from "@/lib/domain";
@@ -7,7 +7,7 @@ import { roleLabels } from "@/utils/constants";
 
 const editableRoles: Role[] = ["admin", "parent", "kid"];
 
-export function HouseEditScreen({ house, members }: HouseEditData) {
+export function HouseEditScreen({ house, members, member: currentMember }: HouseEditData) {
   return (
     <section className="mx-auto w-full max-w-4xl rounded-lg border border-zinc-200 bg-white p-6">
       <div className="flex flex-col gap-4 border-b border-zinc-200 pb-5 sm:flex-row sm:items-center sm:justify-between">
@@ -22,8 +22,9 @@ export function HouseEditScreen({ house, members }: HouseEditData) {
         </div>
       </div>
 
-      <form action={updateHouseAction} className="mt-6 space-y-6">
-        <input type="hidden" name="houseId" value={house.id} />
+        <form action={updateHouseAction} className="mt-6 space-y-6">
+          <input type="hidden" name="houseId" value={house.id} />
+          <input type="hidden" name="returnTo" value={`/houses/${house.id}/edit`} />
 
         <section className="space-y-3">
           <div className="flex items-center gap-2">
@@ -72,10 +73,10 @@ export function HouseEditScreen({ house, members }: HouseEditData) {
                   </div>
                 </div>
 
-                <label className="block sm:w-56">
-                  <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                    Role
-                  </span>
+                  <label className="block sm:w-56">
+                    <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                      Role
+                    </span>
                   <select
                     name={`role_${member.id}`}
                     defaultValue={member.role}
@@ -86,11 +87,22 @@ export function HouseEditScreen({ house, members }: HouseEditData) {
                         {roleLabels[role]}
                       </option>
                     ))}
-                  </select>
-                </label>
-              </div>
-            ))}
-          </div>
+                    </select>
+                  </label>
+
+                  <button
+                    type="submit"
+                    formAction={`/api/houses/${house.id}/members/${member.id}/remove`}
+                    formMethod="post"
+                    disabled={member.id === currentMember.id}
+                    className="inline-flex h-10 items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40 sm:self-end"
+                  >
+                    <Trash2 aria-hidden className="size-4" />
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
         </section>
 
         <div className="flex flex-wrap gap-2">

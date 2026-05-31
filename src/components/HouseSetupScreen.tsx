@@ -1,12 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { createHouseAction, joinHouseAction } from "@/app/actions";
+import { createHouseAction } from "@/app/actions";
 
 export function HouseSetupScreen({
   defaultDisplayName,
+  requestSent = false,
+  requestError,
 }: {
   defaultDisplayName?: string | null;
+  requestSent?: boolean;
+  requestError?: string | null;
 }) {
   const [mode, setMode] = useState<"create" | "join">("create");
   const isCreateMode = mode === "create";
@@ -23,6 +27,18 @@ export function HouseSetupScreen({
             ? "The first member becomes the house admin."
             : "Enter the house ID or invite code and join with your own display name."}
         </p>
+
+        {requestSent ? (
+          <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+            Join request sent. Wait for an admin to approve it.
+          </div>
+        ) : null}
+
+        {requestError ? (
+          <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">
+            {requestError}
+          </div>
+        ) : null}
 
         <div className="mt-6 flex rounded-md border border-zinc-200 p-1">
           <button
@@ -71,7 +87,8 @@ export function HouseSetupScreen({
             </button>
           </form>
         ) : (
-          <form action={joinHouseAction} className="mt-6 space-y-4">
+          <form action="/api/family/join-requests" method="post" className="mt-6 space-y-4">
+            <input type="hidden" name="returnTo" value="/houses/switch" />
             <label className="block">
               <span className="mb-2 block text-sm font-semibold">House ID or invite code</span>
               <input

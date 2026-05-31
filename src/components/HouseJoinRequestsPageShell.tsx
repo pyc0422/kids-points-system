@@ -1,19 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { AppHeader } from "./AppHeader";
-import { HouseEditScreen } from "./HouseEditScreen";
-import type { AppData, HouseEditData } from "@/lib/bff/family";
+import type { HouseJoinRequestsData } from "@/lib/bff/family";
 import { tabs } from "@/utils/constants";
+import { AppHeader } from "./AppHeader";
+import { HouseJoinRequestsScreen } from "./HouseJoinRequestsScreen";
 
-export function HouseEditPageShell({
-  appData,
-  editData,
+export function HouseJoinRequestsPageShell({
+  data,
   viewerEmail,
   requestError,
 }: {
-  appData: AppData;
-  editData: HouseEditData;
+  data: HouseJoinRequestsData;
   viewerEmail: string;
   requestError?: string | null;
 }) {
@@ -22,12 +20,12 @@ export function HouseEditPageShell({
   return (
     <main className="min-h-screen bg-[#f7f5ef] text-zinc-950">
       <AppHeader
-        activeMember={editData.member}
-        activeHouseId={editData.house.id}
-        activeHouseLabel={`${editData.house.name} · Invite ${editData.house.inviteCode}`}
+        activeMember={data.member}
+        activeHouseId={data.house.id}
+        activeHouseLabel={`${data.house.name} · Invite ${data.house.inviteCode}`}
         activeTab="home"
         availableTabs={tabs}
-        joinedHouses={appData.joinedHouses}
+        joinedHouses={data.joinedHouses}
         viewerEmail={viewerEmail}
         onTabChange={() => {
           router.push("/");
@@ -41,7 +39,7 @@ export function HouseEditPageShell({
           </div>
         ) : null}
 
-        <HouseEditScreen {...editData} />
+        <HouseJoinRequestsScreen house={data.house} requests={data.requests} />
       </section>
     </main>
   );

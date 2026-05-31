@@ -14,6 +14,7 @@ import type {
   CompletionStatus,
   House,
   HouseMember,
+  HouseJoinRequest,
   LedgerEntry,
   MemberSummary,
   RewardType,
@@ -28,6 +29,7 @@ import { AppHeader } from "./AppHeader";
 import { BalancesTab } from "./BalancesTab";
 import { ChartsTab } from "./ChartsTab";
 import { EmptyHouseState } from "./EmptyHouseState";
+import { JoinRequestsAlert } from "./JoinRequestsAlert";
 import { HomeTab } from "./HomeTab";
 
 export function KidsPointsApp({
@@ -36,6 +38,8 @@ export function KidsPointsApp({
   activeMember,
   joinedHouses,
   viewerEmail,
+  pendingJoinRequests,
+  requestError,
   members,
   activities,
   completions,
@@ -46,6 +50,8 @@ export function KidsPointsApp({
   activeMember: HouseMember;
   joinedHouses: JoinedHouse[];
   viewerEmail: string;
+  pendingJoinRequests: HouseJoinRequest[];
+  requestError?: string | null;
   members: HouseMember[];
   activities: Activity[];
   completions: Completion[];
@@ -198,6 +204,19 @@ export function KidsPointsApp({
 
       <section className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {kids.length === 0 ? <EmptyHouseState /> : null}
+
+        {requestError ? (
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+            {requestError}
+          </div>
+        ) : null}
+
+        {activeMember.role === "admin" ? (
+          <JoinRequestsAlert
+            houseId={house.id}
+            requests={pendingJoinRequests}
+          />
+        ) : null}
 
         {activeTab === "home" && kids.length > 0 ? (
           <HomeTab

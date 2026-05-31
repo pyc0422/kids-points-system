@@ -11,6 +11,8 @@ export type ActivityFrequency =
 
 export type CompletionStatus = "pending" | "submitted" | "approved" | "rejected";
 
+export type JoinRequestStatus = "pending" | "approved" | "denied";
+
 export type HouseMember = {
   id: string;
   name: string;
@@ -22,6 +24,18 @@ export type House = {
   id: string;
   name: string;
   inviteCode: string;
+};
+
+export type HouseJoinRequest = {
+  id: string;
+  houseId: string;
+  requestedBy: string;
+  displayName: string;
+  role: Role;
+  status: JoinRequestStatus;
+  createdAt: string;
+  reviewedAt?: string;
+  reviewedByMemberId?: string;
 };
 
 export type Activity = {

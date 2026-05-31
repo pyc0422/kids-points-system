@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
-import { HouseEditPageShell } from "@/components/HouseEditPageShell";
+import { HouseJoinRequestsPageShell } from "@/components/HouseJoinRequestsPageShell";
 import { createClient } from "@/lib/supabase/server";
-import { getAppData, getHouseEditData } from "@/lib/bff/family";
+import { getHouseJoinRequestsData } from "@/lib/bff/family";
 
-export default async function HouseEditPage({
+export default async function HouseJoinRequestsPage({
   params,
   searchParams,
 }: {
@@ -21,19 +21,15 @@ export default async function HouseEditPage({
     redirect("/");
   }
 
-  const [appData, editData] = await Promise.all([
-    getAppData(user.id),
-    getHouseEditData(user.id, houseId),
-  ]);
+  const data = await getHouseJoinRequestsData(user.id, houseId);
 
-  if (!appData || !editData) {
+  if (!data) {
     redirect("/houses/switch");
   }
 
   return (
-    <HouseEditPageShell
-      appData={appData}
-      editData={editData}
+    <HouseJoinRequestsPageShell
+      data={data}
       viewerEmail={user.email ?? ""}
       requestError={requestError}
     />

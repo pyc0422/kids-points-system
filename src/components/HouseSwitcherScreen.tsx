@@ -1,21 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import {
-  createHouseAction,
-  joinHouseAction,
-  switchHouseAction,
-} from "@/app/actions";
+import { createHouseAction, switchHouseAction } from "@/app/actions";
 import type { JoinedHouse } from "@/lib/bff/family";
 
 export function HouseSwitcherScreen({
   defaultDisplayName,
   joinedHouses,
   activeHouseId,
+  requestSent = false,
+  requestError,
 }: {
   defaultDisplayName?: string | null;
   joinedHouses: JoinedHouse[];
   activeHouseId: string | null;
+  requestSent?: boolean;
+  requestError?: string | null;
 }) {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedHouseId, setSelectedHouseId] = useState(
@@ -30,6 +30,18 @@ export function HouseSwitcherScreen({
         <p className="mt-2 text-sm text-zinc-500">
           Pick a house you already joined, join another one by ID or invite code, or create a new house.
         </p>
+
+        {requestSent ? (
+          <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+            Join request sent. Wait for an admin to approve it.
+          </div>
+        ) : null}
+
+        {requestError ? (
+          <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">
+            {requestError}
+          </div>
+        ) : null}
 
         <form action={switchHouseAction} className="mt-6 space-y-4">
           <label className="block">
@@ -58,7 +70,8 @@ export function HouseSwitcherScreen({
 
         <div className="mt-8 border-t border-zinc-200 pt-6">
           <h2 className="text-lg font-semibold">Join another house</h2>
-          <form action={joinHouseAction} className="mt-4 space-y-4">
+          <form action="/api/family/join-requests" method="post" className="mt-4 space-y-4">
+            <input type="hidden" name="returnTo" value="/houses/switch" />
             <label className="block">
               <span className="mb-2 block text-sm font-semibold">House ID or invite code</span>
               <input

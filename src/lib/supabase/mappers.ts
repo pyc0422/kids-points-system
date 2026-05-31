@@ -1,6 +1,7 @@
 import type {
   Activity,
   Completion,
+  HouseJoinRequest,
   House,
   HouseMember,
   LedgerEntry,
@@ -73,5 +74,21 @@ export function mapLedgerEntry(
     amount: Number(row.amount),
     createdAt: new Date(row.created_at).toLocaleString(),
     note: row.note ?? undefined,
+  };
+}
+
+export function mapHouseJoinRequest(
+  row: Database["public"]["Tables"]["house_join_requests"]["Row"],
+): HouseJoinRequest {
+  return {
+    id: row.id,
+    houseId: row.house_id,
+    requestedBy: row.requested_by,
+    displayName: row.display_name,
+    role: row.role,
+    status: row.status,
+    createdAt: new Date(row.created_at).toLocaleString(),
+    reviewedAt: row.reviewed_at ? new Date(row.reviewed_at).toLocaleString() : undefined,
+    reviewedByMemberId: row.reviewed_by_member_id ?? undefined,
   };
 }
