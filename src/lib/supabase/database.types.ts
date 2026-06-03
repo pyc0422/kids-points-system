@@ -145,6 +145,7 @@ export type Database = {
         Row: {
           activity_id: string | null;
           amount: number;
+          completed_on: string | null;
           created_at: string;
           created_by_member_id: string;
           house_id: string;
@@ -156,6 +157,7 @@ export type Database = {
         Insert: {
           activity_id?: string | null;
           amount: number;
+          completed_on?: string | null;
           created_at?: string;
           created_by_member_id: string;
           house_id: string;
@@ -200,6 +202,16 @@ export type Database = {
         };
         Returns: Database["public"]["Tables"]["house_join_requests"]["Row"];
       };
+      apply_activity_mark: {
+        Args: {
+          p_activity_id: string;
+          p_completed_on: string;
+          p_house_id: string;
+          p_member_id: string;
+          p_status: Database["public"]["Enums"]["completion_status"];
+        };
+        Returns: void;
+      };
       deny_join_request: {
         Args: {
           p_house_id: string;
@@ -221,6 +233,15 @@ export type Database = {
           p_member_id: string;
         };
         Returns: Database["public"]["Tables"]["house_members"]["Row"];
+      };
+      remove_activity_mark: {
+        Args: {
+          p_activity_id: string;
+          p_completed_on: string;
+          p_house_id: string;
+          p_member_id: string;
+        };
+        Returns: void;
       };
       request_join_house: {
         Args: {

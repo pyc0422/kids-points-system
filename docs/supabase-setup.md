@@ -32,6 +32,8 @@ In Supabase, open **SQL Editor** and run these files in order:
 5. `supabase/migrations/0006_activity_repeat_on.sql`
 6. `supabase/migrations/0007_update_house_details_rpc.sql`
 7. `supabase/migrations/0008_join_requests_and_member_removal.sql`
+8. `supabase/migrations/0009_ledger_completed_on_and_activity_edit_window.sql`
+9. `supabase/migrations/0010_activity_mark_rpc.sql`
 
 The migration creates:
 

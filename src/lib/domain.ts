@@ -65,6 +65,7 @@ export type LedgerEntry = {
   id: string;
   memberId: string;
   activityId?: string;
+  completedOn?: string;
   type: RewardType;
   amount: number;
   createdAt: string;

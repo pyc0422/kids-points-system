@@ -70,9 +70,10 @@ export function mapLedgerEntry(
     id: row.id,
     memberId: row.member_id,
     activityId: row.activity_id ?? undefined,
+    completedOn: row.completed_on ?? undefined,
     type: row.type,
     amount: Number(row.amount),
-    createdAt: new Date(row.created_at).toLocaleString(),
+    createdAt: row.created_at,
     note: row.note ?? undefined,
   };
 }

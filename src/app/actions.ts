@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { Activity, CompletionStatus, HouseMember, RewardType } from "@/lib/domain";
 import { createClient } from "@/lib/supabase/server";
+import { isWithinLastDays } from "@/utils/date";
 
 async function getUserOrThrow() {
   const supabase = await createClient();
@@ -33,6 +34,12 @@ async function getCurrentMember(houseId: string) {
   }
 
   return { supabase, user, member: data };
+}
+
+function ensureEditableDate(completedOn: string) {
+  if (!isWithinLastDays(completedOn, 28)) {
+    throw new Error("You can only edit the last 4 weeks.");
+  }
 }
 
 export async function createHouseAction(formData: FormData) {
@@ -266,61 +273,53 @@ export async function upsertCompletionAction({
   completedOn: string;
   houseId: string;
 }) {
+  const { supabase } = await getCurrentMember(houseId);
+  ensureEditableDate(completedOn);
+  const { error } = await supabase.rpc("apply_activity_mark" as never, {
+    p_house_id: houseId,
+    p_activity_id: activity.id,
+    p_member_id: member.id,
+    p_completed_on: completedOn,
+    p_status: status,
+  } as never);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/");
+}
+
+export async function removeCompletionMarkAction({
+  activity,
+  member,
+  completedOn,
+  houseId,
+}: {
+  activity: Activity;
+  member: HouseMember;
+  completedOn: string;
+  houseId: string;
+}) {
   const { supabase, member: currentMember } = await getCurrentMember(houseId);
-  const now = new Date().toISOString();
+  const isSelfEdit = currentMember.id === member.id;
+  const canEdit =
+    isSelfEdit || currentMember.role === "admin" || currentMember.role === "parent";
 
-  if (activity.frequency === "as-needed") {
-    const { error: ledgerError } = await supabase.from("ledger_entries").insert({
-      house_id: houseId,
-      member_id: member.id,
-      activity_id: activity.id,
-      type: activity.rewardType,
-      amount: activity.rewardAmount,
-      created_by_member_id: currentMember.id,
-    });
-
-    if (ledgerError) {
-      throw new Error(ledgerError.message);
-    }
-
-    revalidatePath("/");
-    return;
+  if (!canEdit) {
+    throw new Error("You do not have permission to edit this activity.");
   }
 
-  const { error: completionError } = await supabase.from("completions").upsert(
-    {
-      activity_id: activity.id,
-      member_id: member.id,
-      completed_on: completedOn,
-      status,
-      submitted_at: now,
-      reviewed_at:
-        status === "approved" || status === "rejected" ? now : null,
-      reviewer_member_id:
-        status === "approved" || status === "rejected" ? currentMember.id : null,
-    },
-    {
-      onConflict: "activity_id,member_id,completed_on",
-    },
-  );
+  ensureEditableDate(completedOn);
+  const { error } = await supabase.rpc("remove_activity_mark" as never, {
+    p_house_id: houseId,
+    p_activity_id: activity.id,
+    p_member_id: member.id,
+    p_completed_on: completedOn,
+  } as never);
 
-  if (completionError) {
-    throw new Error(completionError.message);
-  }
-
-  if (status === "approved") {
-    const { error: ledgerError } = await supabase.from("ledger_entries").insert({
-      house_id: houseId,
-      member_id: member.id,
-      activity_id: activity.id,
-      type: activity.rewardType,
-      amount: activity.rewardAmount,
-      created_by_member_id: currentMember.id,
-    });
-
-    if (ledgerError) {
-      throw new Error(ledgerError.message);
-    }
+  if (error) {
+    throw new Error(error.message);
   }
 
   revalidatePath("/");

@@ -1,4 +1,5 @@
-import type { Activity, Completion } from "@/lib/domain";
+import type { Activity, Completion, LedgerEntry } from "@/lib/domain";
+import { isoDate } from "@/utils/date";
 
 const weekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -34,8 +35,69 @@ export function getCompletion(
       return sameAssignment;
     }
 
-    return sameAssignment && completion.completedOn === completedOn;
+  return sameAssignment && completion.completedOn === completedOn;
   });
+}
+
+function getEntryDateKey(entry: LedgerEntry) {
+  if (entry.completedOn) {
+    return entry.completedOn;
+  }
+
+  const date = new Date(entry.createdAt);
+  return Number.isNaN(date.getTime()) ? null : isoDate(date);
+}
+
+export function getAsNeededDoneCount(
+  ledgerEntries: LedgerEntry[],
+  activityId: string,
+  memberId: string,
+  dateKey: string,
+) {
+  return ledgerEntries.filter((entry) => {
+    if (entry.activityId !== activityId || entry.memberId !== memberId) {
+      return false;
+    }
+
+    return getEntryDateKey(entry) === dateKey;
+  }).length;
+}
+
+export function getActivityDayState({
+  activity,
+  completions,
+  ledgerEntries,
+  memberId,
+  dateKey,
+}: {
+  activity: Activity;
+  completions: Completion[];
+  ledgerEntries: LedgerEntry[];
+  memberId: string;
+  dateKey: string;
+}) {
+  if (activity.frequency === "as-needed") {
+    const doneCount = getAsNeededDoneCount(
+      ledgerEntries,
+      activity.id,
+      memberId,
+      dateKey,
+    );
+
+    return {
+      doneCount,
+      isDone: doneCount > 0,
+      completion: undefined,
+    };
+  }
+
+  const completion = getCompletion(completions, activity.id, memberId, dateKey);
+
+  return {
+    doneCount: 0,
+    isDone: completion?.status === "submitted" || completion?.status === "approved",
+    completion,
+  };
 }
 
 export function isActivityDue(activity: Activity, date: Date) {

@@ -3,12 +3,14 @@ import { useState } from "react";
 import type { Activity, HouseMember, LedgerEntry, MemberSummary, RewardType } from "@/lib/domain";
 import type { BalanceMode } from "@/utils/app-types";
 import { currency } from "@/utils/format";
+import { isoDate } from "@/utils/date";
 import { Avatar } from "./Avatar";
 import { HistoryList } from "./HistoryList";
 import { PreviewAmount } from "./PreviewAmount";
 
 export function BalancesTab({
   kids,
+  members,
   summaries,
   ledgerEntries,
   activities,
@@ -19,6 +21,7 @@ export function BalancesTab({
   onAdjust,
 }: {
   kids: HouseMember[];
+  members: HouseMember[];
   summaries: MemberSummary[];
   ledgerEntries: LedgerEntry[];
   activities: Activity[];
@@ -53,21 +56,13 @@ export function BalancesTab({
     return ledgerEntries
       .filter((entry) => entry.memberId === member.id)
       .filter((entry) => {
+        const entryKey = isoDate(new Date(entry.createdAt));
         if (!rangeStart && !rangeEnd) {
           return true;
         }
 
-        if (entry.createdAt === "Just now" || entry.createdAt === "This week") {
-          return true;
-        }
-
-        const entryDate = new Date(entry.createdAt);
-        if (Number.isNaN(entryDate.getTime())) {
-          return true;
-        }
-
-        const afterStart = rangeStart ? entryDate >= new Date(rangeStart) : true;
-        const beforeEnd = rangeEnd ? entryDate <= new Date(rangeEnd) : true;
+        const afterStart = rangeStart ? entryKey >= rangeStart : true;
+        const beforeEnd = rangeEnd ? entryKey <= rangeEnd : true;
 
         return afterStart && beforeEnd;
       })
@@ -280,7 +275,11 @@ export function BalancesTab({
             />
           </div>
         </div>
-        <HistoryList entries={filteredHistoryFor(selectedKid)} activities={activities} />
+        <HistoryList
+          entries={filteredHistoryFor(selectedKid)}
+          activities={activities}
+          members={members}
+        />
       </section>
     </div>
   );

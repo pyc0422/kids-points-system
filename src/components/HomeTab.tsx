@@ -3,10 +3,9 @@ import type {
   Completion,
   CompletionStatus,
   HouseMember,
+  LedgerEntry,
 } from "@/lib/domain";
-import { demoToday } from "@/utils/constants";
-import { isoDate } from "@/utils/date";
-import { getCompletion } from "@/utils/activity";
+import { getActivityDayState } from "@/utils/activity";
 import { ActivityAssignmentRow } from "./ActivityAssignmentRow";
 import { Avatar } from "./Avatar";
 
@@ -15,9 +14,11 @@ export function HomeTab({
   selectedKid,
   activities,
   completions,
+  ledgerEntries,
   activeMember,
   canReview,
   dueCountForMember,
+  todayKey,
   onOpenMember,
   onSubmit,
   onReview,
@@ -26,9 +27,11 @@ export function HomeTab({
   selectedKid?: HouseMember;
   activities: Activity[];
   completions: Completion[];
+  ledgerEntries: LedgerEntry[];
   activeMember?: HouseMember;
   canReview: boolean;
   dueCountForMember: (memberId: string) => number;
+  todayKey: string;
   onOpenMember: (memberId: string) => void;
   onSubmit: (activity: Activity, member: HouseMember) => void;
   onReview: (
@@ -38,10 +41,10 @@ export function HomeTab({
   ) => void;
 }) {
   return (
-    <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
+    <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
       <section className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-5">
         <h2 className="text-lg font-semibold">Household Members</h2>
-        <div className="mt-4 grid gap-3">
+        <div className="mt-4 grid gap-2">
           {kids.map((kid) => {
             const dueCount = dueCountForMember(kid.id);
 
@@ -50,7 +53,7 @@ export function HomeTab({
                 key={kid.id}
                 type="button"
                 onClick={() => onOpenMember(kid.id)}
-                className={`flex items-center justify-between gap-3 rounded-lg border p-3 text-left transition ${
+                className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-left transition ${
                   selectedKid?.id === kid.id
                     ? "border-zinc-950 bg-zinc-50"
                     : "border-zinc-200 bg-white hover:bg-zinc-50"
@@ -58,12 +61,12 @@ export function HomeTab({
               >
                 <span className="flex min-w-0 items-center gap-3">
                   <Avatar member={kid} />
-                  <span>
-                    <span className="block font-semibold">{kid.name}</span>
-                    <span className="text-sm text-zinc-500">{dueCount} due today</span>
+                  <span className="min-w-0">
+                    <span className="block truncate font-semibold">{kid.name}</span>
+                    <span className="text-xs text-zinc-500">{dueCount} due today</span>
                   </span>
                 </span>
-                <span className="rounded-md bg-amber-50 px-2 py-1 text-sm font-semibold text-amber-800">
+                <span className="shrink-0 rounded-md bg-amber-50 px-2 py-1 text-sm font-semibold text-amber-800">
                   {dueCount}
                 </span>
               </button>
@@ -83,27 +86,34 @@ export function HomeTab({
             </p>
           </div>
         </div>
+
         {selectedKid ? (
           <div className="grid gap-3">
             {activities
               .filter((activity) => activity.assigneeIds.includes(selectedKid.id))
-              .map((activity) => (
-                <ActivityAssignmentRow
-                  key={activity.id}
-                  activity={activity}
-                  member={selectedKid}
-                  activeMember={activeMember}
-                  completion={getCompletion(
-                    completions,
-                    activity.id,
-                    selectedKid.id,
-                    isoDate(demoToday),
-                  )}
-                  canReview={canReview}
-                  onSubmit={onSubmit}
-                  onReview={onReview}
-                />
-              ))}
+              .map((activity) => {
+                const dayState = getActivityDayState({
+                  activity,
+                  completions,
+                  ledgerEntries,
+                  memberId: selectedKid.id,
+                  dateKey: todayKey,
+                });
+
+                return (
+                  <ActivityAssignmentRow
+                    key={activity.id}
+                    activity={activity}
+                    member={selectedKid}
+                    activeMember={activeMember}
+                    completion={dayState.completion}
+                    asNeededDoneCount={dayState.doneCount}
+                    canReview={canReview}
+                    onSubmit={onSubmit}
+                    onReview={onReview}
+                  />
+                );
+              })}
           </div>
         ) : null}
       </section>
