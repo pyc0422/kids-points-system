@@ -257,14 +257,14 @@ export function AppHeader({
               key={tab.id}
               type="button"
               onClick={() => onTabChange(tab.id)}
-              className={`inline-flex h-14 w-14 min-w-0 flex-col items-center justify-center gap-0 rounded-md px-0 text-sm font-semibold leading-none transition sm:h-10 sm:w-auto sm:shrink-0 sm:flex-row sm:gap-2 sm:px-4 sm:text-sm ${
+              className={`inline-flex h-14 w-14 min-w-0 flex-col items-center justify-center gap-1 rounded-md px-0 text-sm font-semibold leading-none transition sm:h-10 sm:w-auto sm:shrink-0 sm:flex-row sm:gap-2 sm:px-4 sm:text-xl ${
                 activeTab === tab.id
                   ? "bg-zinc-950 text-white"
                   : "border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
               }`}
             >
               {tab.icon}
-              <span className="text-xs">{tab.label}</span>
+              <span className="text-xs sm:text-lg">{tab.label}</span>
             </button>
           ))}
         </nav>
