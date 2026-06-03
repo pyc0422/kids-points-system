@@ -55,6 +55,10 @@ export function getAsNeededDoneCount(
   dateKey: string,
 ) {
   return ledgerEntries.filter((entry) => {
+    if (entry.amount === 0) {
+      return false;
+    }
+
     if (entry.activityId !== activityId || entry.memberId !== memberId) {
       return false;
     }

@@ -65,7 +65,6 @@ export function KidsPointsApp({
   const [selectedKidId, setSelectedKidId] = useState(kids[0]?.id ?? "");
   const [selectedBalanceKidId, setSelectedBalanceKidId] = useState(kids[0]?.id ?? "");
   const [balanceMode, setBalanceMode] = useState<BalanceMode>("list");
-  const [selectedChartKidId, setSelectedChartKidId] = useState(kids[0]?.id ?? "");
   const [weekOffset, setWeekOffset] = useState(0);
   const [today, setToday] = useState(() => new Date());
   const todayKey = isoDate(today);
@@ -86,8 +85,6 @@ export function KidsPointsApp({
   const visibleKids = activeMember.role === "kid" ? [activeMember] : kids;
   const currentSelectedKid =
     visibleKids.find((kid) => kid.id === selectedKidId) ?? visibleKids[0];
-  const currentChartKid =
-    visibleKids.find((kid) => kid.id === selectedChartKidId) ?? visibleKids[0];
   const availableTabs = canManageBalances
     ? tabs
     : tabs.filter((tab) => tab.id !== "balances");
@@ -440,14 +437,10 @@ export function KidsPointsApp({
         {activeTab === "charts" ? (
           <ChartsTab
             kids={visibleKids}
-            selectedKid={currentChartKid}
-            selectedKidId={selectedChartKidId}
-            onSelectedKidChange={setSelectedChartKidId}
             activities={activitiesState}
             completions={completionsState}
             ledgerEntries={ledgerEntriesState}
             weekDays={weekDays}
-            weekStart={weekStart}
             todayKey={todayKey}
             canGoPreviousWeek={canGoPreviousWeek}
             canGoNextWeek={canGoNextWeek}

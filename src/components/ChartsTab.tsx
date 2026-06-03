@@ -1,23 +1,148 @@
-import { Check, ChevronLeft, ChevronRight, Circle, Plus, X } from "lucide-react";
+"use client";
+
+import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { Activity, Completion, HouseMember, LedgerEntry } from "@/lib/domain";
-import {
-  formatActivitySchedule,
-  getActivityDayState,
-  isActivityDue,
-} from "@/utils/activity";
-import { dayLabels } from "@/utils/constants";
-import { addDays, formatDate, isoDate, parseDateKey } from "@/utils/date";
+import { Avatar } from "./Avatar";
+import { formatActivitySchedule, getActivityDayState, getAsNeededDoneCount } from "@/utils/activity";
+import { formatDate, isoDate } from "@/utils/date";
+import { isActivityDue } from "@/utils/activity";
+
+type CellTone = "done" | "missed" | "due" | "upcoming" | "empty";
+
+const boardGridClasses =
+  "grid grid-cols-[minmax(5.75rem,7rem)_repeat(7,1.75rem)] gap-1.5 sm:grid-cols-[minmax(8.5rem,11rem)_repeat(7,2rem)] sm:gap-2 lg:grid-cols-[minmax(14rem,18rem)_repeat(7,minmax(0,1fr))] lg:gap-3";
+
+function formatWeekTitle(weekDays: Date[], todayKey: string) {
+  if (weekDays.some((date) => isoDate(date) === todayKey)) {
+    return "This Week";
+  }
+
+  return `${formatDate(weekDays[0])} - ${formatDate(weekDays[6])}`;
+}
+
+function getDayLabel(date: Date) {
+  return date.toLocaleDateString("en-US", { weekday: "short" });
+}
+
+function getAsNeededVisible(weekDays: Date[], activity: Activity, memberId: string, ledgerEntries: LedgerEntry[]) {
+  return weekDays.some((date) =>
+    getAsNeededDoneCount(ledgerEntries, activity.id, memberId, isoDate(date)) > 0,
+  );
+}
+
+function getCellTone({
+  activity,
+  date,
+  stateIsDone,
+  todayKey,
+}: {
+  activity: Activity;
+  date: Date;
+  stateIsDone: boolean;
+  todayKey: string;
+}): CellTone {
+  const dateKey = isoDate(date);
+
+  if (activity.frequency === "as-needed") {
+    return stateIsDone ? "done" : "empty";
+  }
+
+  const due = isActivityDue(activity, date);
+
+  if (stateIsDone) {
+    return "done";
+  }
+
+  if (due && dateKey < todayKey) {
+    return "missed";
+  }
+
+  if (due && dateKey === todayKey) {
+    return "due";
+  }
+
+  if (dateKey > todayKey) {
+    return "upcoming";
+  }
+
+  return "empty";
+}
+
+function CellIcon({ tone }: { tone: CellTone }) {
+  if (tone === "done") {
+    return <Check aria-hidden className="size-4" />;
+  }
+
+  if (tone === "missed") {
+    return <X aria-hidden className="size-4" />;
+  }
+
+  if (tone === "due") {
+    return <Check aria-hidden className="size-4 opacity-60" />;
+  }
+
+  if (tone === "upcoming") {
+    return <span aria-hidden className="text-2xl leading-none opacity-70">•</span>;
+  }
+
+  return null;
+}
+
+function ChartCell({
+  activity,
+  date,
+  tone,
+  doneCount,
+  clickable,
+  onClick,
+}: {
+  activity: Activity;
+  date: Date;
+  tone: CellTone;
+  doneCount: number;
+  clickable: boolean;
+  onClick?: () => void;
+}) {
+  const label = `${activity.name} on ${date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })}`;
+
+  const toneClasses: Record<CellTone, string> = {
+    done: "border-emerald-300 bg-emerald-50 text-emerald-600",
+    missed: "border-red-200 bg-white text-red-500",
+    due: "border-emerald-200 bg-white text-emerald-500",
+    upcoming: "border-zinc-200 bg-zinc-50 text-zinc-400",
+    empty: "border-zinc-200 bg-white text-zinc-300",
+  };
+
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      disabled={!clickable}
+      onClick={onClick}
+      className={`relative flex h-11 w-full items-center justify-center rounded-2xl border text-sm transition ${
+        clickable ? "cursor-pointer hover:border-zinc-300 hover:shadow-sm" : "cursor-default"
+      } ${toneClasses[tone]}`}
+    >
+      <CellIcon tone={tone} />
+      {tone === "done" && doneCount > 1 ? (
+        <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-zinc-950 text-[11px] font-semibold text-white">
+          {doneCount}
+        </span>
+      ) : null}
+    </button>
+  );
+}
 
 export function ChartsTab({
   kids,
-  selectedKid,
-  selectedKidId,
-  onSelectedKidChange,
   activities,
   completions,
   ledgerEntries,
   weekDays,
-  weekStart,
   todayKey,
   canGoPreviousWeek,
   canGoNextWeek,
@@ -25,320 +150,193 @@ export function ChartsTab({
   onNextWeek,
   onMarkDate,
   onRemoveDate,
-}: {
+}: Readonly<{
   kids: HouseMember[];
-  selectedKid?: HouseMember;
-  selectedKidId: string;
-  onSelectedKidChange: (kidId: string) => void;
   activities: Activity[];
   completions: Completion[];
   ledgerEntries: LedgerEntry[];
   weekDays: Date[];
-  weekStart: Date;
   todayKey: string;
   canGoPreviousWeek: boolean;
   canGoNextWeek: boolean;
   onPreviousWeek: () => void;
   onNextWeek: () => void;
-  onMarkDate: (activity: Activity, member: HouseMember, dateKey: string) => void;
-  onRemoveDate: (activity: Activity, member: HouseMember, dateKey: string) => void;
-}) {
-  const chartActivities = selectedKid
-    ? activities.filter((activity) => activity.assigneeIds.includes(selectedKid.id))
-    : [];
-  const editableStartKey = isoDate(addDays(parseDateKey(todayKey), -27));
+  onMarkDate: (activity: Activity, member: HouseMember, completedOn: string) => void;
+  onRemoveDate: (activity: Activity, member: HouseMember, completedOn: string) => void;
+}>) {
+  const weekTitle = formatWeekTitle(weekDays, todayKey);
+
+  function getActivityRowsForKid(memberId: string) {
+    return activities.filter((activity) => {
+      if (!activity.assigneeIds.includes(memberId)) {
+        return false;
+      }
+
+      if (activity.frequency !== "as-needed") {
+        return true;
+      }
+
+      return getAsNeededVisible(weekDays, activity, memberId, ledgerEntries);
+    });
+  }
 
   return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-5">
-      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0">
-          <h2 className="text-lg font-semibold">Completion Chart</h2>
-          <p className="text-sm text-zinc-500">
-            Edit the last 4 weeks. Tap a cell to add or remove a mark.
-          </p>
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-          <select
-            value={selectedKidId}
-            onChange={(event) => onSelectedKidChange(event.target.value)}
-            className="h-10 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm font-semibold outline-none sm:w-auto"
-          >
-            {kids.map((kid) => (
-              <option key={kid.id} value={kid.id}>
-                {kid.name}
-              </option>
-            ))}
-          </select>
-          <div className="flex items-center justify-between gap-2">
-            <button
-              type="button"
-              onClick={onPreviousWeek}
-              disabled={!canGoPreviousWeek}
-              className="inline-flex size-10 items-center justify-center rounded-md border border-zinc-200 bg-white hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label="Previous week"
-              title="Previous week"
-            >
-              <ChevronLeft aria-hidden className="size-5" />
-            </button>
-            <span className="min-w-0 flex-1 text-center text-sm font-semibold">
-              {formatDate(weekStart)} - {formatDate(addDays(weekStart, 6))}
-            </span>
-            <button
-              type="button"
-              onClick={onNextWeek}
-              disabled={!canGoNextWeek}
-              className="inline-flex size-10 items-center justify-center rounded-md border border-zinc-200 bg-white hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label="Next week"
-              title="Next week"
-            >
-              <ChevronRight aria-hidden className="size-5" />
-            </button>
-          </div>
-        </div>
+    <div className="space-y-4">
+      <div className="flex items-center justify-center gap-3">
+        <button
+          type="button"
+          onClick={onPreviousWeek}
+          disabled={!canGoPreviousWeek}
+          className="inline-flex size-11 items-center justify-center rounded-full border border-zinc-300 bg-white text-zinc-700 transition hover:border-zinc-400 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-35"
+        >
+          <ChevronLeft aria-hidden className="size-6" />
+        </button>
+        <h2 className="min-w-0 text-center text-xl font-semibold tracking-tight text-zinc-950 sm:text-2xl">
+          {weekTitle}
+        </h2>
+        <button
+          type="button"
+          onClick={onNextWeek}
+          disabled={!canGoNextWeek}
+          className="inline-flex size-11 items-center justify-center rounded-full border border-zinc-300 bg-white text-zinc-700 transition hover:border-zinc-400 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-35"
+        >
+          <ChevronRight aria-hidden className="size-6" />
+        </button>
       </div>
 
-      <div className="lg:hidden">
-        <div className="grid gap-3">
-          {chartActivities.map((activity) => (
-            <article key={activity.id} className="rounded-lg border border-zinc-200 bg-white p-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate font-semibold">{activity.name}</p>
-                  <p className="text-xs capitalize text-zinc-500">
-                    {formatActivitySchedule(activity)}
-                  </p>
-                </div>
-                <span className="rounded-md bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-600">
-                  4 weeks
+      <div className="overflow-hidden rounded-[28px] border border-zinc-200 bg-white shadow-sm">
+        <div className="border-b border-zinc-200 bg-white px-3 py-3 sm:px-4">
+          <div className={boardGridClasses}>
+            <div />
+            {weekDays.map((date) => (
+              <div key={isoDate(date)} className="flex justify-center">
+                <span className="origin-bottom -rotate-45 text-[10px] font-medium uppercase tracking-wide text-zinc-500 sm:text-xs">
+                  {getDayLabel(date)}
                 </span>
               </div>
+            ))}
+          </div>
+        </div>
 
-              <div className="mt-3 grid grid-cols-7 gap-1">
-                {weekDays.map((date, index) => (
-                  <div key={isoDate(date)} className="min-w-0">
-                    <span className="mb-1 block text-center text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
-                      {dayLabels[index]}
-                    </span>
-                    <div className="flex aspect-square items-center justify-center rounded-md border border-zinc-200 bg-zinc-50">
-                      <ChartCell
-                        activity={activity}
-                        member={selectedKid}
-                        date={date}
-                        completions={completions}
-                        ledgerEntries={ledgerEntries}
-                        todayKey={todayKey}
-                        editableStartKey={editableStartKey}
-                        onMarkDate={onMarkDate}
-                        onRemoveDate={onRemoveDate}
-                        compact
-                      />
+        <div className="divide-y divide-zinc-200">
+          {kids.map((kid) => {
+            const kidActivities = getActivityRowsForKid(kid.id);
+
+            return (
+              <section key={kid.id} className="px-3 py-4 sm:px-4">
+                <div className={boardGridClasses}>
+                  <div className="flex items-center gap-3">
+                    <Avatar member={kid} compact />
+                    <div className="min-w-0">
+                      <p className="truncate text-base font-semibold text-zinc-950 sm:text-lg">
+                        {kid.name}
+                      </p>
+                      <p className="text-xs text-zinc-500 sm:text-sm">
+                        {kidActivities.length} activity{kidActivities.length === 1 ? "" : "s"}
+                      </p>
                     </div>
                   </div>
-                ))}
-              </div>
-            </article>
-          ))}
+                  <div className="col-span-7" />
+                </div>
+
+                <div className="mt-3 space-y-2">
+                  {kidActivities.map((activity) => {
+                    return (
+                      <div
+                        key={activity.id}
+                        className={boardGridClasses}
+                      >
+                        <div className="flex min-w-0 items-start gap-3">
+                          <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl bg-zinc-950 text-[10px] font-semibold uppercase tracking-wide text-white sm:size-9 sm:text-[11px]">
+                            {activity.name.slice(0, 2)}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="line-clamp-2 text-sm font-medium text-zinc-950 sm:text-base">
+                              {activity.name}
+                            </p>
+                            <p className="text-[11px] text-zinc-500 sm:text-xs">
+                              {formatActivitySchedule(activity)}
+                            </p>
+                          </div>
+                        </div>
+
+                        {weekDays.map((date) => {
+                          const dateKey = isoDate(date);
+                          const state = getActivityDayState({
+                            activity,
+                            completions,
+                            ledgerEntries,
+                            memberId: kid.id,
+                            dateKey,
+                          });
+                          const tone = getCellTone({
+                            activity,
+                            date,
+                            stateIsDone: state.isDone,
+                            todayKey,
+                          });
+                          const due = isActivityDue(activity, date);
+                          const canInteract =
+                            activity.frequency === "as-needed" ||
+                            state.isDone ||
+                            (dateKey <= todayKey && due);
+
+                          return (
+                            <ChartCell
+                              key={dateKey}
+                              activity={activity}
+                              date={date}
+                              tone={tone}
+                              doneCount={state.doneCount}
+                              clickable={canInteract}
+                              onClick={
+                                canInteract
+                                  ? () => {
+                                      if (state.isDone) {
+                                        onRemoveDate(activity, kid, dateKey);
+                                      } else {
+                                        onMarkDate(activity, kid, dateKey);
+                                      }
+                                    }
+                                  : undefined
+                              }
+                            />
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
         </div>
       </div>
 
-      <div className="hidden overflow-x-auto lg:block">
-        <div className="min-w-[760px]">
-          <div className="grid grid-cols-[220px_repeat(7,minmax(72px,1fr))] border-b border-zinc-200 text-sm font-semibold text-zinc-600">
-            <div className="p-3">Activity</div>
-            {weekDays.map((date, index) => (
-              <div key={isoDate(date)} className="p-3 text-center">
-                <span className="block">{dayLabels[index]}</span>
-                <span className="text-xs font-medium text-zinc-400">
-                  {formatDate(date)}
-                </span>
-              </div>
-            ))}
+      <div className="rounded-3xl border border-zinc-200 bg-white px-4 py-4 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-zinc-700">
+          <div className="flex items-center gap-2">
+            <span className="flex size-8 items-center justify-center rounded-lg border border-red-200 bg-white text-red-500">
+              <X aria-hidden className="size-4" />
+            </span>
+            <span>Incomplete</span>
           </div>
-
-          {chartActivities.map((activity) => (
-            <div
-              key={activity.id}
-              className="grid grid-cols-[220px_repeat(7,minmax(72px,1fr))] border-b border-zinc-100"
-            >
-              <div className="p-3">
-                <p className="font-semibold">{activity.name}</p>
-                <p className="text-xs capitalize text-zinc-500">
-                  {formatActivitySchedule(activity)}
-                </p>
-              </div>
-              {weekDays.map((date) => (
-                <ChartCell
-                  key={`${activity.id}-${isoDate(date)}`}
-                  activity={activity}
-                  member={selectedKid}
-                  date={date}
-                  completions={completions}
-                  ledgerEntries={ledgerEntries}
-                  todayKey={todayKey}
-                  editableStartKey={editableStartKey}
-                  onMarkDate={onMarkDate}
-                  onRemoveDate={onRemoveDate}
-                />
-              ))}
-            </div>
-          ))}
+          <div className="flex items-center gap-2">
+            <span className="flex size-8 items-center justify-center rounded-lg border border-emerald-200 bg-white text-emerald-600">
+              <Check aria-hidden className="size-4 opacity-60" />
+            </span>
+            <span>Due today</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="flex size-8 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-400">
+              <span aria-hidden className="text-xl leading-none">
+                •
+              </span>
+            </span>
+            <span>Upcoming</span>
+          </div>
         </div>
       </div>
-    </section>
-  );
-}
-
-function ChartCell({
-  activity,
-  member,
-  date,
-  completions,
-  ledgerEntries,
-  todayKey,
-  editableStartKey,
-  onMarkDate,
-  onRemoveDate,
-  compact = false,
-}: {
-  activity: Activity;
-  member?: HouseMember;
-  date: Date;
-  completions: Completion[];
-  ledgerEntries: LedgerEntry[];
-  todayKey: string;
-  editableStartKey: string;
-  onMarkDate: (activity: Activity, member: HouseMember, dateKey: string) => void;
-  onRemoveDate: (activity: Activity, member: HouseMember, dateKey: string) => void;
-  compact?: boolean;
-}) {
-  if (!member) {
-    return compact ? <div className="aspect-square" /> : <div className="p-3" />;
-  }
-
-  const dateKey = isoDate(date);
-  const dayState = getActivityDayState({
-    activity,
-    completions,
-    ledgerEntries,
-    memberId: member.id,
-    dateKey,
-  });
-  const isDone = dayState.isDone;
-  const isDue = isActivityDue(activity, date);
-  const isEditableDate = dateKey >= editableStartKey && dateKey <= todayKey;
-  const isRepeatable = activity.frequency === "as-needed";
-  const canAdd = isEditableDate && (isRepeatable || isDue);
-  const canRemove = isEditableDate && (isDone || (isRepeatable && dayState.doneCount > 0));
-
-  if (!canAdd && !canRemove) {
-    if (isDone) {
-      return (
-        <div
-          className={
-            compact
-              ? "flex h-full items-center justify-center"
-              : "flex items-center justify-center p-3"
-          }
-        >
-          <span
-            className={`inline-flex items-center justify-center rounded-full bg-emerald-100 text-emerald-700 ${
-              compact ? "size-6" : "size-8"
-            }`}
-          >
-            <Check aria-hidden className={compact ? "size-4" : "size-5"} />
-          </span>
-        </div>
-      );
-    }
-
-    if (!isDue) {
-      return compact ? <div className="aspect-square" /> : <div className="p-3" />;
-    }
-
-    return (
-      <div
-        className={
-          compact
-            ? "flex h-full items-center justify-center"
-            : "flex items-center justify-center p-3"
-        }
-      >
-        <Circle aria-hidden className={compact ? "size-4 text-zinc-300" : "size-6 text-zinc-300"} />
-      </div>
-    );
-  }
-
-  const action = isDone || (isRepeatable && dayState.doneCount > 0) ? "undo" : "mark";
-  const handleClick = () => {
-    if (action === "undo") {
-      onRemoveDate(activity, member, dateKey);
-      return;
-    }
-
-    onMarkDate(activity, member, dateKey);
-  };
-
-  const label = action === "undo" ? "Remove mark" : isRepeatable ? "Add activity" : "Mark done";
-
-  return (
-    <button
-      type="button"
-      onClick={handleClick}
-      className={
-        compact
-          ? "flex h-full w-full items-center justify-center rounded-md outline-none transition hover:bg-zinc-100 focus:bg-zinc-100"
-          : "flex h-full w-full items-center justify-center rounded-md outline-none transition hover:bg-zinc-50 focus:bg-zinc-50"
-      }
-      title={label}
-      aria-label={label}
-    >
-      {action === "undo" ? (
-        <span className="relative inline-flex items-center justify-center">
-          <span
-            className={`inline-flex items-center justify-center rounded-full bg-emerald-100 text-emerald-700 ${
-              compact ? "size-6" : "size-8"
-            }`}
-          >
-            <Check aria-hidden className={compact ? "size-4" : "size-5"} />
-          </span>
-          <span className="absolute -right-1 -top-1 inline-flex size-4 items-center justify-center rounded-full bg-white text-rose-600 shadow ring-1 ring-zinc-200">
-            <X aria-hidden className="size-3" />
-          </span>
-        </span>
-      ) : isRepeatable ? (
-        <span className="relative inline-flex items-center justify-center">
-          {dayState.doneCount > 0 ? (
-            <span
-              className={`inline-flex items-center justify-center rounded-full bg-emerald-100 text-emerald-700 ${
-                compact ? "size-6" : "size-8"
-              }`}
-            >
-              <Check aria-hidden className={compact ? "size-4" : "size-5"} />
-            </span>
-          ) : (
-            <span
-              className={`inline-flex items-center justify-center rounded-full border border-dashed border-zinc-300 bg-white text-zinc-400 ${
-                compact ? "size-6" : "size-8"
-              }`}
-            >
-              <Plus aria-hidden className={compact ? "size-4" : "size-5"} />
-            </span>
-          )}
-          {dayState.doneCount > 1 ? (
-            <span className="absolute -right-2 -top-2 inline-flex min-w-5 items-center justify-center rounded-full bg-zinc-950 px-1 text-[10px] font-semibold text-white">
-              {dayState.doneCount}
-            </span>
-          ) : null}
-        </span>
-      ) : (
-        <span
-          className={`inline-flex items-center justify-center rounded-full ${
-            isDue ? "border border-dashed border-zinc-300 bg-white text-zinc-500" : "bg-zinc-50 text-zinc-300"
-          } ${compact ? "size-6" : "size-8"}`}
-        >
-          <Plus aria-hidden className={compact ? "size-4" : "size-5"} />
-        </span>
-      )}
-    </button>
+    </div>
   );
 }

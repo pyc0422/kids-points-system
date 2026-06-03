@@ -13,21 +13,21 @@ export const roleLabels = {
 };
 
 export const tabs: Array<{ id: TabId; label: string; icon: React.ReactNode }> = [
-  { id: "home", label: "Home", icon: <HomeIcon aria-hidden className="size-4" /> },
+  { id: "home", label: "Home", icon: <HomeIcon aria-hidden className="size-5 sm:size-4" /> },
   {
     id: "activities",
     label: "Activities",
-    icon: <ActivityIcon aria-hidden className="size-4" />,
+    icon: <ActivityIcon aria-hidden className="size-5 sm:size-4" />,
   },
   {
     id: "balances",
     label: "Balances",
-    icon: <BadgeDollarSign aria-hidden className="size-4" />,
+    icon: <BadgeDollarSign aria-hidden className="size-5 sm:size-4" />,
   },
   {
     id: "charts",
     label: "Charts",
-    icon: <CalendarDays aria-hidden className="size-4" />,
+    icon: <CalendarDays aria-hidden className="size-5 sm:size-4" />,
   },
 ];
 

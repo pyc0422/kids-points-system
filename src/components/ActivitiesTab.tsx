@@ -392,15 +392,12 @@ export function ActivitiesTab({
           >
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h3 className="font-semibold">{activity.name}</h3>
+                <h3 className="text-base font-semibold sm:text-lg">{activity.name}</h3>
                 <Badge>{formatActivitySchedule(activity)}</Badge>
                 <Badge tone={activity.rewardType === "points" ? "blue" : "green"}>
                   {rewardLabel(activity.rewardType, activity.rewardAmount)}
                 </Badge>
               </div>
-              {activity.description ? (
-                <p className="mt-2 text-sm text-zinc-500">{activity.description}</p>
-              ) : null}
             </div>
             <div className="flex flex-wrap items-center gap-2 lg:justify-end">
               {kids
@@ -409,9 +406,10 @@ export function ActivitiesTab({
                   <span
                     key={kid.id}
                     className="inline-flex items-center gap-2 rounded-md bg-zinc-50 px-2 py-1 text-sm font-medium"
+                    title={kid.name}
                   >
                     <Avatar member={kid} compact />
-                    {kid.name}
+                    <span className="sr-only">{kid.name}</span>
                   </span>
                 ))}
             </div>

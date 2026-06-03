@@ -62,56 +62,56 @@ export function AppHeader({
 
   return (
     <section className="border-b border-zinc-200 bg-white">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-lg bg-zinc-950 text-white">
-              <HomeIcon aria-hidden className="size-5" />
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-zinc-950 text-white sm:size-11">
+              <HomeIcon aria-hidden className="size-4 sm:size-5" />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 items-center gap-2">
               {canEditHouse ? (
                 <Link
                   href={`/houses/${activeHouseId}/edit`}
                   aria-label="Edit house"
                   title="Edit house"
-                  className="inline-flex size-8 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-700 transition hover:bg-zinc-50"
+                  className="inline-flex size-7 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-700 transition hover:bg-zinc-50 sm:size-8"
                 >
-                  <PencilLine aria-hidden className="size-4" />
+                  <PencilLine aria-hidden className="size-3.5 sm:size-4" />
                 </Link>
               ) : null}
-              <div>
-                <p className="text-sm font-medium text-zinc-500">
+              <div className="min-w-0">
+                <p className="truncate text-[11px] font-medium text-zinc-500 sm:text-sm">
                   {activeHouseLabel}
                 </p>
-                <h1 className="text-2xl font-semibold tracking-normal">
+                <h1 className="truncate text-lg font-semibold tracking-tight sm:text-xl lg:text-2xl">
                   Family Points & Allowance
                 </h1>
               </div>
             </div>
           </div>
 
-          <div className="relative self-start" ref={menuRef}>
+          <div className="relative shrink-0 self-start" ref={menuRef}>
             <button
               type="button"
               onClick={handleUserMenuToggle}
-              className="inline-flex h-11 items-center gap-3 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-left transition hover:bg-zinc-100"
+              className="inline-flex h-10 max-w-[11rem] items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-2.5 text-left transition hover:bg-zinc-100 sm:h-11 sm:max-w-none sm:gap-3 sm:px-3"
               aria-haspopup="menu"
               aria-expanded={userMenuOpen}
             >
               <Avatar member={activeMember} compact />
               <span className="min-w-0">
-                <span className="block truncate text-sm font-semibold text-zinc-950">
+                <span className="block truncate text-[13px] font-semibold text-zinc-950 sm:text-sm">
                   {activeMember.name}
                 </span>
               </span>
               <ChevronDown
                 aria-hidden
-                className={`size-4 text-zinc-500 transition ${userMenuOpen ? "rotate-180" : ""}`}
+                className={`size-3.5 shrink-0 text-zinc-500 transition sm:size-4 ${userMenuOpen ? "rotate-180" : ""}`}
               />
             </button>
 
             {userMenuOpen ? (
-              <div className="absolute right-0 z-20 mt-2 w-80 rounded-lg border border-zinc-200 bg-white p-3 shadow-lg">
+              <div className="absolute right-0 z-20 mt-2 w-[19rem] rounded-lg border border-zinc-200 bg-white p-3 shadow-lg sm:w-80">
                 <div className="border-b border-zinc-200 pb-3">
                   <div className="flex items-center gap-3">
                     <Avatar member={activeMember} />
@@ -156,7 +156,9 @@ export function AppHeader({
                           <button
                             type="submit"
                             className={`flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-sm transition hover:bg-zinc-50 ${
-                              entry.house.id === activeHouseId ? "bg-zinc-50" : ""
+                              entry.house.id === activeHouseId
+                                ? "bg-zinc-50"
+                                : ""
                             }`}
                           >
                             <span className="min-w-0">
@@ -192,7 +194,10 @@ export function AppHeader({
                       {showHouseList ? (
                         <div className="mt-2 grid gap-1 rounded-md border border-zinc-200 p-1">
                           {joinedHouses.map((entry) => (
-                            <form key={entry.house.id} action={switchHouseAction}>
+                            <form
+                              key={entry.house.id}
+                              action={switchHouseAction}
+                            >
                               <input
                                 type="hidden"
                                 name="houseId"
@@ -201,7 +206,9 @@ export function AppHeader({
                               <button
                                 type="submit"
                                 className={`flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-sm transition hover:bg-zinc-50 ${
-                                  entry.house.id === activeHouseId ? "bg-zinc-50" : ""
+                                  entry.house.id === activeHouseId
+                                    ? "bg-zinc-50"
+                                    : ""
                                 }`}
                               >
                                 <span className="min-w-0">
@@ -244,20 +251,20 @@ export function AppHeader({
           </div>
         </div>
 
-        <nav className="flex gap-2 overflow-x-auto">
+        <nav className="grid grid-cols-4 gap-2 pb-1 sm:flex sm:gap-2 sm:overflow-x-auto sm:px-0">
           {availableTabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => onTabChange(tab.id)}
-              className={`inline-flex h-10 shrink-0 items-center gap-2 rounded-md px-4 text-sm font-semibold transition ${
+              className={`inline-flex h-14 w-14 min-w-0 flex-col items-center justify-center gap-0 rounded-md px-0 text-sm font-semibold leading-none transition sm:h-10 sm:w-auto sm:shrink-0 sm:flex-row sm:gap-2 sm:px-4 sm:text-sm ${
                 activeTab === tab.id
                   ? "bg-zinc-950 text-white"
                   : "border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
               }`}
             >
               {tab.icon}
-              {tab.label}
+              <span className="text-xs">{tab.label}</span>
             </button>
           ))}
         </nav>

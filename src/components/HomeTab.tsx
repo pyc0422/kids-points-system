@@ -105,6 +105,7 @@ export function HomeTab({
                     key={activity.id}
                     activity={activity}
                     member={selectedKid}
+                    assignees={kids.filter((kid) => activity.assigneeIds.includes(kid.id))}
                     activeMember={activeMember}
                     completion={dayState.completion}
                     asNeededDoneCount={dayState.doneCount}

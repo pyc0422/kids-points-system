@@ -19,6 +19,7 @@ const statusStyles: Record<CompletionStatus, string> = {
 export function ActivityAssignmentRow({
   activity,
   member,
+  assignees,
   activeMember,
   completion,
   asNeededDoneCount,
@@ -28,6 +29,7 @@ export function ActivityAssignmentRow({
 }: Readonly<{
   activity: Activity;
   member: HouseMember;
+  assignees: HouseMember[];
   activeMember?: HouseMember;
   completion?: Completion;
   asNeededDoneCount: number;
@@ -57,7 +59,7 @@ export function ActivityAssignmentRow({
 
   return (
     <article
-      className={`rounded-lg border p-3 transition ${
+      className={`rounded-lg border p-3 transition sm:p-4 ${
         isCompleted && !isRepeatable
           ? "border-zinc-200 bg-zinc-50/70 opacity-70"
           : "border-zinc-200 bg-white hover:border-zinc-950 hover:bg-zinc-50"
@@ -77,23 +79,20 @@ export function ActivityAssignmentRow({
             <Badge tone={activity.rewardType === "points" ? "blue" : "green"}>
               {rewardLabel(activity.rewardType, activity.rewardAmount)}
             </Badge>
-            <span className="rounded-md bg-amber-50 px-2 py-1 text-xs font-medium capitalize text-amber-800">
+            <span className="rounded-md bg-amber-50 px-2 py-1 text-[11px] font-medium capitalize text-amber-800 sm:text-xs">
               {activity.requiresApproval ? "Approval" : "Auto"}
             </span>
           </div>
-          {activity.description ? (
-            <p className="mt-1 line-clamp-2 text-sm text-zinc-500">{activity.description}</p>
-          ) : null}
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
           {isRepeatable ? (
-            <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-800">
+            <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-800 sm:text-xs">
               {asNeededDoneCount > 0 ? `${asNeededDoneCount} done today` : "Available"}
             </span>
           ) : (
             <span
-              className={`rounded-md border px-2 py-1 text-xs font-semibold capitalize ${statusStyles[status]}`}
+              className={`rounded-md border px-2 py-1 text-[11px] font-semibold capitalize sm:text-xs ${statusStyles[status]}`}
             >
               {status}
             </span>
@@ -101,24 +100,34 @@ export function ActivityAssignmentRow({
         </div>
       </div>
 
-      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <Avatar member={member} compact />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium">{member.name}</p>
-            <p className="text-xs text-zinc-500">
-              {isRepeatable
-                ? asNeededDoneCount > 0
-                  ? `Done ${asNeededDoneCount} time${asNeededDoneCount === 1 ? "" : "s"} today`
-                  : "Tap as many times as needed"
-                : completion?.submittedAt
-                  ? `Submitted ${completion.submittedAt}`
-                  : "Not submitted yet"}
-            </p>
-          </div>
+      <div className="mt-3 flex items-end justify-between gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          {assignees.slice(0, 3).map((assignee) => (
+            <span
+              key={assignee.id}
+              className="inline-flex items-center justify-center rounded-md bg-zinc-50 p-1.5"
+              title={assignee.name}
+            >
+              <Avatar member={assignee} compact />
+            </span>
+          ))}
+          {assignees.length > 3 ? (
+            <span className="inline-flex size-8 items-center justify-center rounded-md border border-zinc-200 bg-white text-xs font-semibold text-zinc-500">
+              ...
+            </span>
+          ) : null}
+          <span className="text-[11px] text-zinc-500 sm:text-xs">
+            {isRepeatable
+              ? asNeededDoneCount > 0
+                ? `Done ${asNeededDoneCount} time${asNeededDoneCount === 1 ? "" : "s"} today`
+                : "Tap as many times as needed"
+              : completion?.submittedAt
+                ? `Submitted ${completion.submittedAt}`
+                : "Not submitted yet"}
+          </span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           {isRepeatable && asNeededDoneCount > 0 ? (
             <div className="flex flex-wrap items-center gap-1">
               {Array.from({ length: Math.min(asNeededDoneCount, 4) }, (_, index) => (
