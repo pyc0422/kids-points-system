@@ -73,7 +73,7 @@ export function BalancesTab({
     return (
       <section className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-5">
         <h2 className="text-base font-semibold sm:text-lg">Balances</h2>
-        <div className="mt-4 grid gap-3">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {kids.map((kid) => {
             const summary = summaries.find((item) => item.member.id === kid.id);
 
@@ -82,7 +82,7 @@ export function BalancesTab({
                 key={kid.id}
                 type="button"
                 onClick={() => onSelectKid(kid.id)}
-                className="grid gap-3 rounded-lg border border-zinc-200 p-3 text-left transition hover:border-zinc-950 hover:bg-zinc-50 md:grid-cols-[1fr_160px_160px]"
+                className="grid gap-3 rounded-lg border border-zinc-200 p-3 text-left transition hover:border-zinc-950 hover:bg-zinc-50"
               >
                 <span className="flex items-center gap-3">
                   <Avatar member={kid} />
@@ -91,16 +91,18 @@ export function BalancesTab({
                     <span className="text-xs text-zinc-500 sm:text-sm">View balance history</span>
                   </span>
                 </span>
-                <span className="rounded-lg bg-teal-50 p-3 text-teal-900">
-                  <span className="block text-xs sm:text-sm">Points</span>
-                  <span className="text-lg font-semibold sm:text-xl">{summary?.points ?? 0}</span>
-                </span>
-                <span className="rounded-lg bg-lime-50 p-3 text-lime-900">
-                  <span className="block text-xs sm:text-sm">Allowance</span>
-                  <span className="text-lg font-semibold sm:text-xl">
-                    {currency(summary?.money ?? 0)}
+                <div className="grid grid-cols-2 gap-2">
+                  <span className="rounded-lg bg-teal-50 p-3 text-teal-900">
+                    <span className="block text-[11px] sm:text-sm">Points</span>
+                    <span className="text-lg font-semibold sm:text-xl">{summary?.points ?? 0}</span>
                   </span>
-                </span>
+                  <span className="rounded-lg bg-lime-50 p-3 text-lime-900">
+                    <span className="block text-[11px] sm:text-sm">Allowance</span>
+                    <span className="text-lg font-semibold sm:text-xl">
+                      {currency(summary?.money ?? 0)}
+                    </span>
+                  </span>
+                </div>
               </button>
             );
           })}
@@ -228,7 +230,7 @@ export function BalancesTab({
             <p className="text-xs text-zinc-500 sm:text-sm">Current balance</p>
           </div>
         </div>
-        <div className="mt-5 grid gap-3">
+        <div className="mt-5 grid grid-cols-2 gap-3">
           <div className="rounded-lg bg-teal-50 p-4 text-teal-900">
             <p className="text-xs sm:text-sm">Points</p>
             <p className="text-2xl font-semibold sm:text-3xl">{selectedSummary?.points ?? 0}</p>

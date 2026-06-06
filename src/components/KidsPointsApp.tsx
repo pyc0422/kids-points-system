@@ -127,8 +127,7 @@ export function KidsPointsApp({
   }
 
   function submitActivity(activity: Activity, member: HouseMember) {
-    const status = activity.requiresApproval ? "submitted" : "approved";
-    upsertCompletion(activity, member, status);
+    upsertCompletion(activity, member, "submitted");
   }
 
   function upsertCompletion(
