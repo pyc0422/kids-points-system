@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export function AuthScreen() {
@@ -13,30 +14,37 @@ export function AuthScreen() {
     setError(null);
     setStatus(null);
     setIsSubmitting(true);
-    const supabase = createClient();
-    const { data, error: signInError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
+    try {
+      const supabase = createClient();
+      const { data, error: signInError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
 
-    if (signInError) {
-      setError(signInError.message);
+      if (signInError) {
+        setError(signInError.message);
+        return;
+      }
+
+      if (data?.url) {
+        window.location.assign(data.url);
+        return;
+      }
+
+      setError("Could not start Google sign-in.");
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Google sign-in failed.");
+    } finally {
       setIsSubmitting(false);
-      return;
     }
-
-    if (data?.url) {
-      window.location.assign(data.url);
-      return;
-    }
-
-    setIsSubmitting(false);
   }
 
-  async function sendMagicLink() {
-    const trimmedEmail = email.trim();
+  async function sendMagicLink(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const trimmedEmail = email.trim().toLowerCase();
     if (!trimmedEmail) {
       setError("Enter an email address.");
       return;
@@ -46,22 +54,27 @@ export function AuthScreen() {
     setStatus(null);
     setIsSubmitting(true);
 
-    const supabase = createClient();
-    const { error: magicLinkError } = await supabase.auth.signInWithOtp({
-      email: trimmedEmail,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
+    try {
+      const supabase = createClient();
+      const { error: magicLinkError } = await supabase.auth.signInWithOtp({
+        email: trimmedEmail,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
 
-    if (magicLinkError) {
-      setError(magicLinkError.message);
+      if (magicLinkError) {
+        setError(magicLinkError.message);
+        return;
+      }
+
+      setEmail("");
+      setStatus(`Check ${trimmedEmail} for the sign-in link.`);
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Could not send the link.");
+    } finally {
       setIsSubmitting(false);
-      return;
     }
-
-    setStatus(`Check ${trimmedEmail} for the sign-in link.`);
-    setIsSubmitting(false);
   }
 
   return (
@@ -83,7 +96,7 @@ export function AuthScreen() {
             Continue with Google
           </button>
 
-          <div className="grid gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+          <form className="grid gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-4" onSubmit={sendMagicLink}>
             <label className="block">
               <span className="mb-2 block text-sm font-semibold">Email</span>
               <input
@@ -91,18 +104,19 @@ export function AuthScreen() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="name@example.com"
+                autoComplete="email"
+                inputMode="email"
                 className="h-11 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-zinc-950"
               />
             </label>
             <button
-              type="button"
-              onClick={sendMagicLink}
+              type="submit"
               disabled={isSubmitting}
               className="inline-flex h-11 w-full items-center justify-center rounded-md border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Send magic link
+              {isSubmitting ? "Sending..." : "Send magic link"}
             </button>
-          </div>
+          </form>
         </div>
 
         {status ? (
