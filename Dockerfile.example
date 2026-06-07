@@ -1,0 +1,39 @@
+FROM node:24-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+
+FROM node:24-alpine AS builder
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run build
+
+FROM node:24-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+# Below need to be setup with you own SUPABASE
+# ENV NEXT_PUBLIC_SUPABASE_URL=
+# ENV NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+# ENV SUPABASE_SERVICE_ROLE_KEY=
+# ENV KINDLE_SESSION_SECRET=//Run this command to create a session: openssl rand -base64 32
+# ENV KINDLE_ACTOR_MEMBER_ID=//optional
+# ENV KINDLE_FAMILY_HOUSE_ID=
+# ENV KINDLE_FAMILY_PIN=
+# ENV KINDLE_COOKIE_SECURE=false
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+EXPOSE 3000
+
+CMD ["sh", "-c", "HOSTNAME=0.0.0.0 node server.js"]

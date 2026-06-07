@@ -7,16 +7,16 @@ import { getAppData } from "@/lib/bff/family";
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ requestError?: string; requestStatus?: string }>;
+  searchParams: Promise<{ requestError?: string }>;
 }) {
-  const { requestError, requestStatus } = await searchParams;
+  const { requestError } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return <AuthScreen requestError={requestError} requestStatus={requestStatus} />;
+    return <AuthScreen />;
   }
 
   const appData = await getAppData(user.id);

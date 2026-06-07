@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "docker:build": "rm -f kids-points-system-amd64.tar && docker buildx build --platform linux/amd64 -t kids-points-system:latest --load .",
+    "docker:zip": "docker save kids-points-system:latest -o kids-points-system-amd64.tar"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

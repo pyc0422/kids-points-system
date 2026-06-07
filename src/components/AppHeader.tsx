@@ -8,7 +8,6 @@ import type { HouseMember } from "@/lib/domain";
 import type { JoinedHouse } from "@/lib/bff/family";
 import type { TabId } from "@/utils/app-types";
 import { roleLabels } from "@/utils/constants";
-import { createClient } from "@/lib/supabase/client";
 import { Avatar } from "./Avatar";
 
 export function AppHeader({
@@ -32,12 +31,6 @@ export function AppHeader({
 }) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [showHouseList, setShowHouseList] = useState(false);
-  const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordStatus, setPasswordStatus] = useState<string | null>(null);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [isSavingPassword, setIsSavingPassword] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const canEditHouse = activeMember.role === "admin";
 
@@ -50,7 +43,6 @@ export function AppHeader({
       if (!menuRef.current.contains(event.target as Node)) {
         setUserMenuOpen(false);
         setShowHouseList(false);
-        setShowPasswordForm(false);
       }
     }
 
@@ -63,45 +55,9 @@ export function AppHeader({
       const nextOpen = !current;
       if (!nextOpen) {
         setShowHouseList(false);
-        setShowPasswordForm(false);
       }
       return nextOpen;
     });
-  }
-
-  async function savePassword() {
-    const trimmedPassword = newPassword.trim();
-    if (trimmedPassword.length < 8) {
-      setPasswordError("Use at least 8 characters.");
-      return;
-    }
-
-    if (trimmedPassword !== confirmPassword.trim()) {
-      setPasswordError("Passwords do not match.");
-      return;
-    }
-
-    setPasswordError(null);
-    setPasswordStatus(null);
-    setIsSavingPassword(true);
-
-    try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.updateUser({ password: trimmedPassword });
-
-      if (error) {
-        setPasswordError(error.message);
-        return;
-      }
-
-      setNewPassword("");
-      setConfirmPassword("");
-      setPasswordStatus("Password saved. You can now use email and password on Kindle.");
-    } catch (caughtError) {
-      setPasswordError(caughtError instanceof Error ? caughtError.message : "Could not save password.");
-    } finally {
-      setIsSavingPassword(false);
-    }
   }
 
   return (
@@ -185,58 +141,6 @@ export function AppHeader({
                 </div>
 
                 <div className="mt-3">
-                  <div className="rounded-lg border border-zinc-200 bg-white p-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowPasswordForm((current) => !current)}
-                      className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
-                    >
-                      <span>Set password</span>
-                      <ChevronDown
-                        aria-hidden
-                        className={`size-4 transition ${showPasswordForm ? "rotate-180" : ""}`}
-                      />
-                    </button>
-                    {showPasswordForm ? (
-                      <div className="mt-2 grid gap-2 border-t border-zinc-200 pt-2">
-                        <input
-                          type="password"
-                          value={newPassword}
-                          onChange={(event) => setNewPassword(event.target.value)}
-                          placeholder="New password"
-                          autoComplete="new-password"
-                          className="h-10 rounded-md border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-950"
-                        />
-                        <input
-                          type="password"
-                          value={confirmPassword}
-                          onChange={(event) => setConfirmPassword(event.target.value)}
-                          placeholder="Confirm password"
-                          autoComplete="new-password"
-                          className="h-10 rounded-md border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-950"
-                        />
-                        <button
-                          type="button"
-                          onClick={savePassword}
-                          disabled={isSavingPassword}
-                          className="inline-flex h-10 items-center justify-center rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:bg-zinc-400"
-                        >
-                          {isSavingPassword ? "Saving..." : "Save password"}
-                        </button>
-                        {passwordStatus ? (
-                          <p className="rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
-                            {passwordStatus}
-                          </p>
-                        ) : null}
-                        {passwordError ? (
-                          <p className="rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-800">
-                            {passwordError}
-                          </p>
-                        ) : null}
-                      </div>
-                    ) : null}
-                  </div>
-
                   <div className="px-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">
                     Switch house
                   </div>

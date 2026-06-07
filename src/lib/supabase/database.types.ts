@@ -123,6 +123,30 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["house_join_requests"]["Insert"]>;
         Relationships: [];
       };
+      kindle_next_items: {
+        Row: {
+          completed_at: string | null;
+          created_at: string;
+          due_on: string;
+          house_id: string;
+          id: string;
+          kind: "event" | "birthday";
+          original_date: string | null;
+          title: string;
+        };
+        Insert: {
+          completed_at?: string | null;
+          created_at?: string;
+          due_on: string;
+          house_id: string;
+          id?: string;
+          kind?: "event" | "birthday";
+          original_date?: string | null;
+          title: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["kindle_next_items"]["Insert"]>;
+        Relationships: [];
+      };
       houses: {
         Row: {
           created_at: string;

@@ -21,6 +21,7 @@ A private family web app for managing both screen-time-style points and allowanc
 - Approval creates a points or money ledger entry.
 - Points and allowance balances are summarized separately.
 - Activities, completions, and balance adjustments write to Supabase.
+- Kindle-friendly family PIN app at `/kindle` using the same Supabase database.
 
 ## Getting Started
 
@@ -38,12 +39,16 @@ Create `.env.local` when you are ready to connect a Supabase project:
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+KINDLE_FAMILY_HOUSE_ID=
+KINDLE_FAMILY_PIN=
+KINDLE_SESSION_SECRET=
 ```
 
 ## Notes
 
 See [docs/architecture.md](docs/architecture.md) for the permission model and database shape.
 See [docs/supabase-setup.md](docs/supabase-setup.md) for the Supabase dashboard setup steps.
+See [docs/docker-nas.md](docs/docker-nas.md) for NAS/Docker deployment notes. The Docker image listens on port `3000`.
 
 The app currently creates the first house/admin after login. Adding kid/parent
 members through the UI is the next backend feature; until then, additional

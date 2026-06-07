@@ -34,6 +34,8 @@ In Supabase, open **SQL Editor** and run these files in order:
 7. `supabase/migrations/0008_join_requests_and_member_removal.sql`
 8. `supabase/migrations/0009_ledger_completed_on_and_activity_edit_window.sql`
 9. `supabase/migrations/0010_activity_mark_rpc.sql`
+10. `supabase/migrations/0011_kindle_next_items.sql`
+11. `supabase/migrations/0012_kindle_next_item_kind.sql`
 
 The migration creates:
 
@@ -48,6 +50,8 @@ The migration creates:
 - an `update_house_details(p_house_id, p_house_name, p_member_roles)` RPC for admin edits
 - a `house_join_requests` table for pending approvals
 - `request_join_house`, `approve_join_request`, `deny_join_request`, and `remove_house_member` RPCs
+- a `kindle_next_items` table for the PIN-protected Kindle app's future-date list
+- event/birthday type fields on Kindle Next items
 
 ## 4. Enable Google login
 
