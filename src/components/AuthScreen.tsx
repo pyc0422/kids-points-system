@@ -1,16 +1,22 @@
 "use client";
 
-import { useState } from "react";
 import type { FormEvent } from "react";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-export function AuthScreen() {
+export function AuthScreen({
+  requestError,
+  requestStatus,
+}: {
+  requestError?: string | null;
+  requestStatus?: string | null;
+}) {
   const [mode, setMode] = useState<"signIn" | "signUp">("signIn");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [status, setStatus] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(requestStatus ?? null);
+  const [error, setError] = useState<string | null>(requestError ?? null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function signInWithGoogle() {
@@ -84,88 +90,6 @@ export function AuthScreen() {
     }
   }
 
-  async function signInWithPassword(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    const trimmedEmail = email.trim().toLowerCase();
-    if (!trimmedEmail || !password) {
-      setError("Enter both email and password.");
-      return;
-    }
-
-    setError(null);
-    setStatus(null);
-    setIsSubmitting(true);
-
-    try {
-      const supabase = createClient();
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: trimmedEmail,
-        password,
-      });
-
-      if (signInError) {
-        setError(signInError.message);
-        return;
-      }
-
-      setStatus("Signed in successfully.");
-      window.location.assign("/");
-    } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Could not sign in.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  async function signUpWithPassword(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    const trimmedEmail = email.trim().toLowerCase();
-    const trimmedPassword = password.trim();
-    if (!trimmedEmail || !trimmedPassword) {
-      setError("Enter both email and password.");
-      return;
-    }
-
-    if (trimmedPassword.length < 8) {
-      setError("Use at least 8 characters.");
-      return;
-    }
-
-    if (trimmedPassword !== confirmPassword.trim()) {
-      setError("Passwords do not match.");
-      return;
-    }
-
-    setError(null);
-    setStatus(null);
-    setIsSubmitting(true);
-
-    try {
-      const supabase = createClient();
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: trimmedEmail,
-        password: trimmedPassword,
-      });
-
-      if (signUpError) {
-        setError(signUpError.message);
-        return;
-      }
-
-      setStatus(
-        "Account created. Check your email if confirmation is enabled, then sign in with email and password."
-      );
-      setMode("signIn");
-      setConfirmPassword("");
-    } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Could not create account.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#f7f5ef] px-4 text-zinc-950">
       <section className="w-full max-w-md rounded-lg border border-zinc-200 bg-white p-6">
@@ -197,13 +121,19 @@ export function AuthScreen() {
             </button>
           </div>
 
-          <form className="grid gap-2 rounded-lg border border-zinc-200 bg-white p-4" onSubmit={mode === "signIn" ? signInWithPassword : signUpWithPassword}>
+          <form
+            className="grid gap-2 rounded-lg border border-zinc-200 bg-white p-4"
+            action="/auth/password"
+            method="post"
+          >
+            <input type="hidden" name="mode" value={mode} />
             <div className="text-sm font-semibold text-zinc-950">
               {mode === "signIn" ? "Email and password" : "Create your account"}
             </div>
             <label className="block">
               <span className="mb-2 block text-sm font-semibold">Email</span>
               <input
+                name="email"
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
@@ -216,10 +146,12 @@ export function AuthScreen() {
             <label className="block">
               <span className="mb-2 block text-sm font-semibold">Password</span>
               <input
+                name="password"
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 autoComplete="current-password"
+                minLength={8}
                 className="h-11 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-zinc-950"
               />
             </label>
@@ -227,10 +159,12 @@ export function AuthScreen() {
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold">Confirm password</span>
                 <input
+                  name="confirmPassword"
                   type="password"
                   value={confirmPassword}
                   onChange={(event) => setConfirmPassword(event.target.value)}
                   autoComplete="new-password"
+                  minLength={8}
                   className="h-11 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-zinc-950"
                 />
               </label>
