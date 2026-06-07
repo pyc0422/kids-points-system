@@ -55,21 +55,25 @@ export function AuthScreen() {
     setIsSubmitting(true);
 
     try {
-      const supabase = createClient();
-      const { error: magicLinkError } = await supabase.auth.signInWithOtp({
-        email: trimmedEmail,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+      const response = await fetch("/api/auth/magic-link", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({ email: trimmedEmail }),
       });
 
-      if (magicLinkError) {
-        setError(magicLinkError.message);
+      const payload = (await response.json().catch(() => null)) as
+        | { message?: string; error?: string }
+        | null;
+
+      if (!response.ok) {
+        setError(payload?.error ?? "Could not send the link.");
         return;
       }
 
       setEmail("");
-      setStatus(`Check ${trimmedEmail} for the sign-in link.`);
+      setStatus(payload?.message ?? `Check ${trimmedEmail} for the sign-in link.`);
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Could not send the link.");
     } finally {
