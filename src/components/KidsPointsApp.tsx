@@ -246,23 +246,18 @@ export function KidsPointsApp({
       );
     } else {
       setLedgerEntriesState((current) => {
-        const matchIndex = [...current]
-          .reverse()
-          .findIndex(
-            (entry) =>
+        const nextEntries = current.filter(
+          (entry) =>
+            !(
               entry.activityId === activity.id &&
               entry.memberId === member.id &&
               entry.completedOn === completedOn &&
-              entry.amount !== 0,
-          );
+              entry.amount !== 0
+            ),
+        );
 
-        if (matchIndex === -1) {
-          return current;
-        }
-
-        const realIndex = current.length - 1 - matchIndex;
         return [
-          ...current.filter((_, index) => index !== realIndex),
+          ...nextEntries,
           {
             id: globalThis.crypto.randomUUID(),
             memberId: member.id,

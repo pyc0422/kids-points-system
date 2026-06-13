@@ -246,17 +246,11 @@ begin
 
   if activity_row.frequency = 'as-needed' then
     delete from public.ledger_entries
-    where id = (
-      select id
-      from public.ledger_entries
-      where house_id = p_house_id
-        and member_id = p_member_id
-        and activity_id = p_activity_id
-        and completed_on = p_completed_on
-        and amount <> 0
-      order by created_at desc
-      limit 1
-    );
+    where house_id = p_house_id
+      and member_id = p_member_id
+      and activity_id = p_activity_id
+      and completed_on = p_completed_on
+      and amount <> 0;
 
     audit_note := format('Removed %s on %s', activity_row.name, p_completed_on);
 

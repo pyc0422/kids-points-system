@@ -62,13 +62,13 @@ export function AppHeader({
 
   return (
     <section className="border-b border-zinc-200 bg-white">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
-        <div className="flex items-center justify-between gap-3">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-3 py-3 sm:px-6 sm:py-5 lg:px-8">
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
           <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-zinc-950 text-white sm:size-11">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-zinc-950 text-white sm:size-11">
               <HomeIcon aria-hidden className="size-4 sm:size-5" />
             </div>
-            <div className="flex min-w-0 items-center gap-2">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
               {canEditHouse ? (
                 <Link
                   href={`/houses/${activeHouseId}/edit`}
@@ -80,10 +80,10 @@ export function AppHeader({
                 </Link>
               ) : null}
               <div className="min-w-0">
-                <p className="truncate text-[11px] font-medium text-zinc-500 sm:text-sm">
+                <p className="truncate text-[10px] font-medium text-zinc-500 sm:text-sm">
                   {activeHouseLabel}
                 </p>
-                <h1 className="truncate text-lg font-semibold tracking-tight sm:text-xl lg:text-2xl">
+                <h1 className="truncate text-base font-semibold tracking-tight sm:text-xl lg:text-2xl">
                   Family Points & Allowance
                 </h1>
               </div>
@@ -94,13 +94,13 @@ export function AppHeader({
             <button
               type="button"
               onClick={handleUserMenuToggle}
-              className="inline-flex h-10 max-w-[11rem] items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-2.5 text-left transition hover:bg-zinc-100 sm:h-11 sm:max-w-none sm:gap-3 sm:px-3"
+              className="inline-flex h-10 max-w-[10rem] items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-2 text-left transition hover:bg-zinc-100 sm:h-11 sm:max-w-none sm:gap-3 sm:px-3"
               aria-haspopup="menu"
               aria-expanded={userMenuOpen}
             >
               <Avatar member={activeMember} compact />
               <span className="min-w-0">
-                <span className="block truncate text-[13px] font-semibold text-zinc-950 sm:text-sm">
+                <span className="block truncate text-[12px] font-semibold text-zinc-950 sm:text-sm">
                   {activeMember.name}
                 </span>
               </span>
@@ -111,7 +111,7 @@ export function AppHeader({
             </button>
 
             {userMenuOpen ? (
-              <div className="absolute right-0 z-20 mt-2 w-[19rem] rounded-lg border border-zinc-200 bg-white p-3 shadow-lg sm:w-80">
+              <div className="absolute right-0 z-20 mt-2 w-[18rem] rounded-lg border border-zinc-200 bg-white p-3 shadow-lg sm:w-80">
                 <div className="border-b border-zinc-200 pb-3">
                   <div className="flex items-center gap-3">
                     <Avatar member={activeMember} />
@@ -257,7 +257,7 @@ export function AppHeader({
               key={tab.id}
               type="button"
               onClick={() => onTabChange(tab.id)}
-              className={`inline-flex h-14 w-14 min-w-0 flex-col items-center justify-center gap-1 rounded-md px-0 text-sm font-semibold leading-none transition sm:h-10 sm:w-auto sm:shrink-0 sm:flex-row sm:gap-2 sm:px-4 sm:text-xl ${
+              className={`inline-flex h-14 w-14 min-w-0 flex-col items-center justify-center gap-1 rounded-md px-0 text-[12px] font-semibold leading-none transition sm:h-10 sm:w-auto sm:shrink-0 sm:flex-row sm:gap-2 sm:px-4 sm:text-xl ${
                 activeTab === tab.id
                   ? "bg-zinc-950 text-white"
                   : "border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"

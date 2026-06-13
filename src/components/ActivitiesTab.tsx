@@ -386,13 +386,13 @@ export function ActivitiesTab({
                   }
                 : undefined
             }
-            className={`grid gap-3 rounded-lg border p-4 lg:grid-cols-[1fr_240px] ${
+            className={`grid gap-3 rounded-lg border p-3 sm:p-4 lg:grid-cols-[1fr_240px] ${
               canAdd ? "cursor-pointer border-zinc-200 hover:border-zinc-950 hover:bg-zinc-50" : "border-zinc-200"
             }`}
           >
             <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-base font-semibold sm:text-lg">{activity.name}</h3>
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <h3 className="text-sm font-semibold sm:text-lg">{activity.name}</h3>
                 <Badge>{formatActivitySchedule(activity)}</Badge>
                 <Badge tone={activity.rewardType === "points" ? "blue" : "green"}>
                   {rewardLabel(activity.rewardType, activity.rewardAmount)}
@@ -405,7 +405,7 @@ export function ActivitiesTab({
                 .map((kid) => (
                   <span
                     key={kid.id}
-                    className="inline-flex items-center gap-2 rounded-md bg-zinc-50 px-2 py-1 text-sm font-medium"
+                    className="inline-flex items-center gap-2 rounded-md bg-zinc-50 px-2 py-1 text-xs font-medium sm:text-sm"
                     title={kid.name}
                   >
                     <Avatar member={kid} compact />

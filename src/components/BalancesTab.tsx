@@ -95,12 +95,12 @@ export function BalancesTab({
                 </span>
                 <div className="grid grid-cols-2 gap-2">
                   <span className="rounded-lg bg-teal-50 p-3 text-teal-900">
-                    <span className="block text-[11px] sm:text-sm">Points</span>
-                    <span className="text-lg font-semibold sm:text-xl">{summary?.points ?? 0}</span>
+                    <span className="block text-[10px] sm:text-sm">Points</span>
+                    <span className="text-base font-semibold sm:text-xl">{summary?.points ?? 0}</span>
                   </span>
                   <span className="rounded-lg bg-lime-50 p-3 text-lime-900">
-                    <span className="block text-[11px] sm:text-sm">Allowance</span>
-                    <span className="text-lg font-semibold sm:text-xl">
+                    <span className="block text-[10px] sm:text-sm">Allowance</span>
+                    <span className="text-base font-semibold sm:text-xl">
                       {currency(summary?.money ?? 0)}
                     </span>
                   </span>
@@ -252,11 +252,11 @@ export function BalancesTab({
         <div className="mt-5 grid grid-cols-2 gap-3">
           <div className="rounded-lg bg-teal-50 p-4 text-teal-900">
             <p className="text-xs sm:text-sm">Points</p>
-            <p className="text-2xl font-semibold sm:text-3xl">{selectedSummary?.points ?? 0}</p>
+            <p className="text-xl font-semibold sm:text-3xl">{selectedSummary?.points ?? 0}</p>
           </div>
           <div className="rounded-lg bg-lime-50 p-4 text-lime-900">
             <p className="text-xs sm:text-sm">Allowance</p>
-            <p className="text-2xl font-semibold sm:text-3xl">
+            <p className="text-xl font-semibold sm:text-3xl">
               {currency(selectedSummary?.money ?? 0)}
             </p>
           </div>
@@ -279,13 +279,13 @@ export function BalancesTab({
             <h2 className="text-base font-semibold sm:text-lg">History</h2>
             <p className="text-xs text-zinc-500 sm:text-sm">Default shows latest 20 entries.</p>
           </div>
-          <div className="flex flex-wrap items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-2 py-2 text-sm">
+          <div className="flex flex-wrap items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-2 py-2 text-xs sm:text-sm">
             <CalendarDays aria-hidden className="size-4 text-zinc-500" />
             <input
               type="date"
               value={rangeStart}
               onChange={(event) => setRangeStart(event.target.value)}
-              className="rounded border border-zinc-200 bg-white px-2 py-1"
+              className="rounded border border-zinc-200 bg-white px-2 py-1 text-xs sm:text-sm"
               aria-label="History start date"
             />
             <span className="text-zinc-400">to</span>
@@ -293,7 +293,7 @@ export function BalancesTab({
               type="date"
               value={rangeEnd}
               onChange={(event) => setRangeEnd(event.target.value)}
-              className="rounded border border-zinc-200 bg-white px-2 py-1"
+              className="rounded border border-zinc-200 bg-white px-2 py-1 text-xs sm:text-sm"
               aria-label="History end date"
             />
           </div>

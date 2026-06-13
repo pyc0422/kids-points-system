@@ -3,14 +3,14 @@
 import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { Activity, Completion, HouseMember, LedgerEntry } from "@/lib/domain";
 import { Avatar } from "./Avatar";
-import { formatActivitySchedule, getActivityDayState, getAsNeededDoneCount } from "@/utils/activity";
+import { getActivityDayState, getAsNeededDoneCount } from "@/utils/activity";
 import { formatDate, isoDate } from "@/utils/date";
 import { isActivityDue } from "@/utils/activity";
 
 type CellTone = "done" | "missed" | "due" | "upcoming" | "empty";
 
 const boardGridClasses =
-  "grid grid-cols-[minmax(5.75rem,7rem)_repeat(7,1.75rem)] gap-1.5 sm:grid-cols-[minmax(8.5rem,11rem)_repeat(7,2rem)] sm:gap-2 lg:grid-cols-[minmax(14rem,18rem)_repeat(7,minmax(0,1fr))] lg:gap-3";
+  "grid grid-cols-[minmax(4.8rem,5.8rem)_repeat(7,1.75rem)] gap-1.25 sm:grid-cols-[minmax(7.5rem,9rem)_repeat(7,2rem)] sm:gap-2 lg:grid-cols-[minmax(11rem,14rem)_repeat(7,minmax(0,1fr))] lg:gap-3";
 
 function formatWeekTitle(weekDays: Date[], todayKey: string) {
   if (weekDays.some((date) => isoDate(date) === todayKey)) {
@@ -228,11 +228,8 @@ export function ChartsTab({
                   <div className="flex items-center gap-3">
                     <Avatar member={kid} compact />
                     <div className="min-w-0">
-                      <p className="truncate text-base font-semibold text-zinc-950 sm:text-lg">
+                      <p className="truncate text-sm font-semibold text-zinc-950 sm:text-lg">
                         {kid.name}
-                      </p>
-                      <p className="text-xs text-zinc-500 sm:text-sm">
-                        {kidActivities.length} activity{kidActivities.length === 1 ? "" : "s"}
                       </p>
                     </div>
                   </div>
@@ -246,18 +243,10 @@ export function ChartsTab({
                         key={activity.id}
                         className={boardGridClasses}
                       >
-                        <div className="flex min-w-0 items-start gap-3">
-                          <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl bg-zinc-950 text-[10px] font-semibold uppercase tracking-wide text-white sm:size-9 sm:text-[11px]">
-                            {activity.name.slice(0, 2)}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="line-clamp-2 text-sm font-medium text-zinc-950 sm:text-base">
-                              {activity.name}
-                            </p>
-                            <p className="text-[11px] text-zinc-500 sm:text-xs">
-                              {formatActivitySchedule(activity)}
-                            </p>
-                          </div>
+                        <div className="min-w-0">
+                          <p className="line-clamp-2 text-sm font-medium text-zinc-950 sm:text-base">
+                            {activity.name}
+                          </p>
                         </div>
 
                         {weekDays.map((date) => {

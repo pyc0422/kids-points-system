@@ -45,9 +45,9 @@ export function HomeTab({
   ) => void;
 }) {
   return (
-    <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
+    <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
       <section className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-5">
-        <h2 className="text-lg font-semibold">Household Members</h2>
+        <h2 className="text-base font-semibold sm:text-lg">Household Members</h2>
         <div className="mt-4 grid gap-2">
           {kids.map((kid) => {
             const dueCount = dueCountForMember(kid.id);
@@ -66,7 +66,9 @@ export function HomeTab({
                 <span className="flex min-w-0 items-center gap-3">
                   <Avatar member={kid} />
                   <span className="min-w-0">
-                    <span className="block truncate font-semibold">{kid.name}</span>
+                    <span className="block truncate text-sm font-semibold sm:text-base">
+                      {kid.name}
+                    </span>
                     <span className="block text-xs text-zinc-500">{dueCount} due today</span>
                     <span className="block text-xs text-zinc-500">
                       {(() => {
@@ -88,10 +90,10 @@ export function HomeTab({
       <section className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-5">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold">
+            <h2 className="text-base font-semibold sm:text-lg">
               {selectedKid ? `${selectedKid.name}'s Activities` : "Activities"}
             </h2>
-            <p className="text-sm text-zinc-500">
+            <p className="text-xs text-zinc-500 sm:text-sm">
               Kids can submit only their own assigned work.
             </p>
           </div>
@@ -111,7 +113,7 @@ export function HomeTab({
                 });
 
                 return (
-                  <ActivityAssignmentRow
+                    <ActivityAssignmentRow
                     key={activity.id}
                     activity={activity}
                     member={selectedKid}
@@ -120,6 +122,8 @@ export function HomeTab({
                     completion={dayState.completion}
                     asNeededDoneCount={dayState.doneCount}
                     canReview={canReview}
+                    showAssignees={false}
+                    statusDisplayMode="pending-only"
                     onSubmit={onSubmit}
                     onReview={onReview}
                   />

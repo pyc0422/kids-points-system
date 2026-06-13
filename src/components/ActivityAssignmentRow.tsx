@@ -24,6 +24,8 @@ export function ActivityAssignmentRow({
   completion,
   asNeededDoneCount,
   canReview,
+  showAssignees = true,
+  statusDisplayMode = "full",
   onSubmit,
   onReview,
 }: Readonly<{
@@ -34,6 +36,8 @@ export function ActivityAssignmentRow({
   completion?: Completion;
   asNeededDoneCount: number;
   canReview: boolean;
+  showAssignees?: boolean;
+  statusDisplayMode?: "full" | "pending-only" | "hidden";
   onSubmit: (activity: Activity, member: HouseMember) => void;
   onReview: (
     activity: Activity,
@@ -57,6 +61,13 @@ export function ActivityAssignmentRow({
       ? "Done"
       : "Mark Done";
 
+  const showStatusChip =
+    statusDisplayMode === "full"
+      ? true
+      : statusDisplayMode === "pending-only"
+        ? status === "submitted"
+        : false;
+
   return (
     <article
       className={`rounded-lg border p-3 transition sm:p-4 ${
@@ -65,9 +76,9 @@ export function ActivityAssignmentRow({
           : "border-zinc-200 bg-white hover:border-zinc-950 hover:bg-zinc-50"
       }`}
     >
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             <h3
               className={`min-w-0 truncate text-sm font-semibold sm:text-base ${
                 isCompleted && !isRepeatable ? "line-through" : ""
@@ -79,39 +90,43 @@ export function ActivityAssignmentRow({
             <Badge tone={activity.rewardType === "points" ? "blue" : "green"}>
               {rewardLabel(activity.rewardType, activity.rewardAmount)}
             </Badge>
-            <span className="rounded-md bg-amber-50 px-2 py-1 text-[11px] font-medium capitalize text-amber-800 sm:text-xs">
+            <span className="rounded-md bg-amber-50 px-2 py-1 text-[10px] font-medium capitalize text-amber-800 sm:text-xs">
               {activity.requiresApproval ? "Approval" : "Auto"}
             </span>
           </div>
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          {isRepeatable ? (
-            <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-800 sm:text-xs">
-              {asNeededDoneCount > 0 ? `${asNeededDoneCount} done today` : "Available"}
-            </span>
-          ) : (
-            <span
-              className={`rounded-md border px-2 py-1 text-[11px] font-semibold capitalize sm:text-xs ${statusStyles[status]}`}
-            >
-              {status}
-            </span>
-          )}
+          {showStatusChip ? (
+            isRepeatable ? (
+              <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-800 sm:text-xs">
+                {asNeededDoneCount > 0 ? `${asNeededDoneCount} done today` : "Available"}
+              </span>
+            ) : (
+              <span
+                className={`rounded-md border px-2 py-1 text-[10px] font-semibold capitalize sm:text-xs ${statusStyles[status]}`}
+              >
+                {status === "submitted" && statusDisplayMode === "pending-only" ? "pending" : status}
+              </span>
+            )
+          ) : null}
         </div>
       </div>
 
-      <div className="mt-3 flex items-end justify-between gap-3">
+      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          {assignees.slice(0, 3).map((assignee) => (
-            <span
-              key={assignee.id}
-              className="inline-flex items-center justify-center rounded-md bg-zinc-50 p-1.5"
-              title={assignee.name}
-            >
-              <Avatar member={assignee} compact />
-            </span>
-          ))}
-          {assignees.length > 3 ? (
+          {showAssignees
+            ? assignees.slice(0, 3).map((assignee) => (
+                <span
+                  key={assignee.id}
+                  className="inline-flex items-center justify-center rounded-md bg-zinc-50 p-1"
+                  title={assignee.name}
+                >
+                  <Avatar member={assignee} compact />
+                </span>
+              ))
+            : null}
+          {showAssignees && assignees.length > 3 ? (
             <span className="inline-flex size-8 items-center justify-center rounded-md border border-zinc-200 bg-white text-xs font-semibold text-zinc-500">
               ...
             </span>
@@ -150,7 +165,7 @@ export function ActivityAssignmentRow({
             <button
               type="button"
               onClick={() => onSubmit(activity, member)}
-              className="inline-flex h-9 items-center gap-2 rounded-md bg-zinc-950 px-3 text-sm font-semibold text-white transition hover:bg-zinc-700"
+              className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-zinc-950 px-3 text-sm font-semibold text-white transition hover:bg-zinc-700 sm:w-auto"
               title="Submit this assigned activity"
             >
               {isRepeatable ? <Plus aria-hidden className="size-4" /> : <Check aria-hidden className="size-4" />}
@@ -162,7 +177,7 @@ export function ActivityAssignmentRow({
             <button
               type="button"
               onClick={() => onReview(activity, member, "approved")}
-              className="inline-flex h-9 items-center gap-2 rounded-md bg-zinc-950 px-3 text-sm font-semibold text-white transition hover:bg-zinc-700"
+              className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-zinc-950 px-3 text-sm font-semibold text-white transition hover:bg-zinc-700 sm:w-auto"
               title={`Mark ${member.name}'s activity done`}
             >
               <Check aria-hidden className="size-4" />
