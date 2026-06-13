@@ -16,6 +16,7 @@ export function BalancesTab({
   activities,
   selectedKidId,
   mode,
+  canAdjustBalances,
   onSelectKid,
   onModeChange,
   onAdjust,
@@ -27,6 +28,7 @@ export function BalancesTab({
   activities: Activity[];
   selectedKidId: string;
   mode: BalanceMode;
+  canAdjustBalances: boolean;
   onSelectKid: (kidId: string) => void;
   onModeChange: (mode: BalanceMode) => void;
   onAdjust: (
@@ -116,6 +118,23 @@ export function BalancesTab({
   }
 
   if (mode === "adjust") {
+    if (!canAdjustBalances) {
+      return (
+        <section className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-5">
+          <button
+            type="button"
+            onClick={() => onModeChange("detail")}
+            className="mb-4 inline-flex h-9 items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 text-sm font-semibold hover:bg-zinc-50"
+          >
+            <ArrowLeft aria-hidden className="size-4" />
+            Back
+          </button>
+          <h2 className="text-base font-semibold sm:text-lg">Adjust {selectedKid.name}&apos;s Balance</h2>
+          <p className="mt-3 text-sm text-zinc-500">Only parents and admins can edit balances.</p>
+        </section>
+      );
+    }
+
     return (
       <section className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-5">
         <button
@@ -242,14 +261,16 @@ export function BalancesTab({
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => onModeChange("adjust")}
-          className="mt-5 inline-flex h-10 items-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-700"
-        >
-          <Plus aria-hidden className="size-4" />
-          Add Adjustment
-        </button>
+        {canAdjustBalances ? (
+          <button
+            type="button"
+            onClick={() => onModeChange("adjust")}
+            className="mt-5 inline-flex h-10 items-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white transition hover:bg-zinc-700"
+          >
+            <Plus aria-hidden className="size-4" />
+            Add Adjustment
+          </button>
+        ) : null}
       </section>
 
       <section className="rounded-lg border border-zinc-200 bg-white p-4 sm:p-5">

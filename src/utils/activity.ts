@@ -27,7 +27,7 @@ export function getCompletion(
   memberId: string,
   completedOn?: string,
 ) {
-  return completions.find((completion) => {
+  const matches = completions.filter((completion) => {
     const sameAssignment =
       completion.activityId === activityId && completion.memberId === memberId;
 
@@ -35,8 +35,10 @@ export function getCompletion(
       return sameAssignment;
     }
 
-  return sameAssignment && completion.completedOn === completedOn;
+    return sameAssignment && completion.completedOn === completedOn;
   });
+
+  return matches.at(-1);
 }
 
 function getEntryDateKey(entry: LedgerEntry) {

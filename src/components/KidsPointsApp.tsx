@@ -85,9 +85,7 @@ export function KidsPointsApp({
   const visibleKids = activeMember.role === "kid" ? [activeMember] : kids;
   const currentSelectedKid =
     visibleKids.find((kid) => kid.id === selectedKidId) ?? visibleKids[0];
-  const availableTabs = canManageBalances
-    ? tabs
-    : tabs.filter((tab) => tab.id !== "balances");
+  const availableTabs = tabs;
   const weekStart = addDays(startOfWeek(today), weekOffset * 7);
   const weekDays = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
   const canGoPreviousWeek = weekOffset > -3;
@@ -254,7 +252,8 @@ export function KidsPointsApp({
             (entry) =>
               entry.activityId === activity.id &&
               entry.memberId === member.id &&
-              entry.completedOn === completedOn,
+              entry.completedOn === completedOn &&
+              entry.amount !== 0,
           );
 
         if (matchIndex === -1) {
@@ -374,6 +373,7 @@ export function KidsPointsApp({
         {activeTab === "home" && kids.length > 0 ? (
           <HomeTab
             kids={visibleKids}
+            summaries={summaries}
             selectedKid={currentSelectedKid}
             activities={activitiesState}
             completions={completionsState}
@@ -415,15 +415,16 @@ export function KidsPointsApp({
           />
         ) : null}
 
-        {activeTab === "balances" && canManageBalances ? (
+        {activeTab === "balances" ? (
           <BalancesTab
-            kids={kids}
+            kids={visibleKids}
             members={members}
             summaries={summaries}
             ledgerEntries={ledgerEntriesState}
             activities={activitiesState}
             selectedKidId={selectedBalanceKidId}
             mode={balanceMode}
+            canAdjustBalances={canManageBalances}
             onSelectKid={(kidId) => {
               setSelectedBalanceKidId(kidId);
               setBalanceMode("detail");

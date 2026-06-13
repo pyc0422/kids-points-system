@@ -4,13 +4,16 @@ import type {
   CompletionStatus,
   HouseMember,
   LedgerEntry,
+  MemberSummary,
 } from "@/lib/domain";
 import { getActivityDayState } from "@/utils/activity";
+import { currency } from "@/utils/format";
 import { ActivityAssignmentRow } from "./ActivityAssignmentRow";
 import { Avatar } from "./Avatar";
 
 export function HomeTab({
   kids,
+  summaries,
   selectedKid,
   activities,
   completions,
@@ -24,6 +27,7 @@ export function HomeTab({
   onReview,
 }: {
   kids: HouseMember[];
+  summaries: MemberSummary[];
   selectedKid?: HouseMember;
   activities: Activity[];
   completions: Completion[];
@@ -63,7 +67,13 @@ export function HomeTab({
                   <Avatar member={kid} />
                   <span className="min-w-0">
                     <span className="block truncate font-semibold">{kid.name}</span>
-                    <span className="text-xs text-zinc-500">{dueCount} due today</span>
+                    <span className="block text-xs text-zinc-500">{dueCount} due today</span>
+                    <span className="block text-xs text-zinc-500">
+                      {(() => {
+                        const summary = summaries.find((item) => item.member.id === kid.id);
+                        return `${summary?.points ?? 0} pts · ${currency(summary?.money ?? 0)}`;
+                      })()}
+                    </span>
                   </span>
                 </span>
                 <span className="shrink-0 rounded-md bg-amber-50 px-2 py-1 text-sm font-semibold text-amber-800">
